@@ -1,0 +1,1472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Elias Verren (Wizard 1)</title>
+<style>
+  :root{
+    --bg:#0a0b0d;--bg-2:#0b0d12;--ink:#e9e5dc;--muted:#a8a29a;--brass:#b08d57;
+    --panel: rgba(16,19,26,.52);  --panel-2: rgba(14,18,24,.44);--line:rgba(36,42,54,.28);--glow:0 0 0 1px rgba(176,141,87,.14),0 14px 28px rgba(0,0,0,.55);
+    --radius:18px;--r-sm:12px;--gap:20px;--gap-lg:26px;
+    
+  }
+
+  /* === Spell/Cantrip Deck Cards */
+.tcard.spell {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid #3a3226;
+  background: linear-gradient(160deg,#141822 0%,#0f1319 60%,#0a0d12 100%);
+  box-shadow:
+    0 10px 30px rgba(0,0,0,.45),
+    inset 0 0 0 1px rgba(176,141,87,.18),
+    inset 0 0 24px rgba(0,0,0,.45);
+  cursor: pointer;
+  transition: transform .2s ease, box-shadow .25s ease, filter .25s ease;
+}
+.tcard.spell:hover { transform: translateY(-1px); box-shadow: 0 16px 34px rgba(0,0,0,.55), inset 0 0 0 1px rgba(176,141,87,.24); }
+
+/* Background art layer (image per school) */
+.tcard.spell .art {
+  position:absolute; inset:0;
+  background-size: cover; background-position:center;
+  filter: grayscale(.35) contrast(1.05) saturate(.9) brightness(.9);
+  opacity:.9;
+}
+
+/* Brass edge + occult fog overlay */
+.tcard.spell::before {
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(176,141,87,.14), transparent 40%),
+    radial-gradient(100% 80% at 100% 120%, rgba(61,167,160,.08), transparent 50%),
+    linear-gradient(180deg, transparent 0%, rgba(0,0,0,.25) 70%, rgba(0,0,0,.5) 100%);
+  mix-blend-mode: screen; opacity:.9;
+}
+
+/* Title + meta band */
+.tcard.spell .name {
+  position:absolute; left:10px; right:10px; top:8px;
+  font-variant: small-caps; letter-spacing:.08em; color:#e2caa3; font-size:14px;
+  text-shadow: 0 1px 0 rgba(0,0,0,.7);
+}
+.tcard.spell .meta {
+  position:absolute; left:10px; right:10px; bottom:8px; color:#c9c3b8; font-size:12px;
+  text-shadow: 0 1px 0 rgba(0,0,0,.7);
+}
+
+/* Small school badge chip */
+.tcard.spell .badge {
+  position:absolute; right:8px; top:8px; font-size:11px; padding:3px 8px;
+  border-radius:999px; border:1px solid rgba(176,141,87,.45);
+  background: rgba(14,18,24,.75);
+  color:#e9e5dc; letter-spacing:.06em;
+}
+
+/* Prepared / Ritual rings */
+.tcard.spell.prepared { box-shadow: 0 12px 34px rgba(0,0,0,.55), 0 0 0 1px rgba(176,141,87,.35) inset; }
+.tcard.spell.ritual   { box-shadow: 0 12px 34px rgba(0,0,0,.55), 0 0 0 1px rgba(61,167,160,.28) inset; }
+
+/* Subtle parallax on hover using mask */
+.tcard.spell .grain {
+  position:absolute; inset:-20%;
+  background-image:
+    radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,.07) 0, transparent 100%),
+    radial-gradient(1px 1px at 60% 70%, rgba(255,255,255,.05) 0, transparent 100%),
+    radial-gradient(1px 1px at 80% 30%, rgba(255,255,255,.06) 0, transparent 100%);
+  mix-blend-mode: soft-light; opacity:.35; transition: transform .3s ease;
+}
+.tcard.spell:hover .grain { transform: translate3d(2px,-2px,0); }
+
+/* Accent glow per school via data attribute */
+.tcard.spell[data-school="Abjuration"] { box-shadow: 0 10px 30px rgba(0,0,0,.45), inset 0 0 0 1px rgba(176,141,87,.22), 0 0 24px rgba(176,141,87,.10); }
+.tcard.spell[data-school="Illusion"]   { box-shadow: 0 10px 30px rgba(0,0,0,.45), inset 0 0 0 1px rgba(61,167,160,.22), 0 0 24px rgba(61,167,160,.12); }
+.tcard.spell[data-school="Conjuration"]{ box-shadow: 0 10px 30px rgba(0,0,0,.45), inset 0 0 0 1px rgba(100,130,210,.20), 0 0 24px rgba(100,130,210,.10); }
+.tcard.spell[data-school="Divination"] { box-shadow: 0 10px 30px rgba(0,0,0,.45), inset 0 0 0 1px rgba(200,210,220,.20), 0 0 24px rgba(200,210,220,.10); }
+.tcard.spell[data-school="Enchantment"]{ box-shadow: 0 10px 30px rgba(0,0,0,.45), inset 0 0 0 1px rgba(190,120,210,.20), 0 0 24px rgba(190,120,210,.10); }
+.tcard.spell[data-school="Evocation"]  { box-shadow: 0 10px 30px rgba(0,0,0,.45), inset 0 0 0 1px rgba(210,90,70,.23),  0 0 24px rgba(210,90,70,.12); }
+.tcard.spell[data-school="Necromancy"] { box-shadow: 0 10px 30px rgba(0,0,0,.45), inset 0 0 0 1px rgba(80,160,120,.20), 0 0 24px rgba(80,160,120,.10); }
+.tcard.spell[data-school="Transmutation"]{box-shadow:0 10px 30px rgba(0,0,0,.45), inset 0 0 0 1px rgba(200,170,100,.22), 0 0 24px rgba(200,170,100,.12);}
+
+  /* === Arcana deck: rounded, image-only, no overlay text/background === */
+.tcard.arcana {
+  background: none !important;
+  border-radius: 16px !important;
+  border: 1px solid #3a3226;
+  box-shadow: 0 10px 30px rgba(0,0,0,.35), inset 0 0 0 1px rgba(176,141,87,.18);
+  overflow: hidden; /* ensure the image corners are clipped */
+}
+
+/* Kill the darkening/filter/overlay on the image */
+.tcard.arcana img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  opacity: 1 !important;
+  filter: none !important;
+  border-radius: inherit;
+}
+
+/* Hide the on-card text overlays for a clean image card */
+.tcard.arcana .name,
+.tcard.arcana .meta {
+  display: none !important;
+}
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;color:var(--ink);font:16px/1.65 "Garamond",Georgia,serif;
+    background:
+      radial-gradient(1200px 600px at 50% -10%, rgba(176,141,87,.09), transparent 60%),
+      radial-gradient(1200px 600px at 70% 120%, rgba(61,167,160,.08), transparent 60%),
+      linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 65%, #08090b 100%);
+    position:relative;
+    overflow-x:hidden;
+  }
+  /* === Background video === */
+.bgvid{
+  position:fixed; inset:0; z-index:-1; pointer-events:none;
+}
+.bgvid video{
+  width:100%; height:100%; object-fit:cover;
+  filter: brightness(1) contrast(1.05) saturate(1);
+}
+
+/*  little brass mute/unmute pill */
+.bgvid .bgvid-audio{
+  position:fixed; left:18px; bottom:18px; z-index:5;
+  pointer-events:auto; cursor:pointer;
+  font-size:16px; line-height:1; padding:10px 12px; border-radius:12px;
+  color:#e9e5dc; background:linear-gradient(180deg,#191c23,#10131a);
+  border:1px solid #3a3226; box-shadow:0 8px 22px rgba(0,0,0,.35), inset 0 0 0 1px rgba(176,141,87,.2);
+}
+.bgvid .bgvid-audio:hover{ filter:brightness(1.08); }
+
+/* Be nice to printing / reduced motion */
+@media print{ .bgvid{ display:none !important; } }
+@media (prefers-reduced-motion:reduce){ .bgvid video{ display:none; } }
+
+  /* ===== Elias Sigil ===== */
+.ev-sigil{
+  --ev-brass: var(--brass, #05cedc);
+  --ev-teal:  var(--teal,  #7a0303);
+  position:fixed; right:26px; bottom:26px;
+  width:150px; height:150px; padding:10px;
+  z-index:4; cursor:pointer; user-select:none;
+  border-radius:50%;
+  background:
+    radial-gradient(120% 120% at 30% 20%, rgba(176,141,87,.08), transparent 60%),
+    radial-gradient(120% 120% at 80% 90%, rgba(61,167,160,.06), transparent 60%);
+  filter:drop-shadow(0 8px 26px rgba(176, 87, 87, 0.18));
+}
+.ev-sigil svg{width:100%;height:100%;display:block;overflow:visible;shape-rendering:geometricPrecision}
+.ev-sigil *{vector-effect:non-scaling-stroke}
+
+.ev-ring{fill:none;stroke:url(#evBrass);stroke-width:2;opacity:.95}
+.ev-ring--thin{stroke-width:1.25;opacity:.7}
+.ev-ring--teal{stroke:var(--ev-teal);opacity:.75}
+.ev-ring--dotted{stroke-dasharray:3 7;opacity:.6}
+
+.ev-text{font:700 12.8px/1 "Garamond", Georgia, serif; letter-spacing:.24em; fill:rgba(233,229,220,.88); text-transform:uppercase}
+.ev-text--inner{font-weight:600; opacity:.82}
+
+.ev-glyph{
+  fill:none; stroke:var(--ev-teal); stroke-width:2.2;
+  stroke-linecap:round; stroke-linejoin:round;
+  stroke-dasharray:560; stroke-dashoffset:560;
+  opacity:.95; animation:ev-draw 1.25s ease forwards paused;
+}
+.ev-sept .ev-glyph{stroke:var(--ev-brass);opacity:.92}
+.ev-monogram{stroke:var(--ev-brass)}
+.ev-nodes .ev-node{
+  fill:none; stroke:rgba(226,202,163,.95);
+  stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;
+  stroke-dasharray:220; stroke-dashoffset:220;
+  animation:ev-draw 900ms ease forwards paused;
+}
+
+/* idle motion */
+.spin-cw{animation:ev-spin 28s linear infinite; transform-origin:150px 150px}
+.spin-ccw{animation:ev-spin 34s linear infinite reverse; transform-origin:150px 150px}
+@keyframes ev-spin{to{transform:rotate(360deg)}}
+@keyframes ev-draw{to{stroke-dashoffset:0}}
+
+/* click ripple (local only) */
+.ev-sigil::after{
+  content:""; position:absolute; inset:-3%; border-radius:50%;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(61,167,160,.45), transparent 58%),
+    radial-gradient(circle at 50% 50%, rgba(176,141,87,.35), transparent 70%);
+  transform:scale(.65); opacity:0; pointer-events:none; filter:blur(2px);
+}
+.ev-sigil.is-active::after{animation:ev-ripple .9s ease-out}
+@keyframes ev-ripple{0%{opacity:0;transform:scale(.6)}10%{opacity:.36}100%{opacity:0;transform:scale(1.14)}}
+
+/* boost while active */
+.ev-sigil.is-active .spin-cw{animation-duration:9s}
+.ev-sigil.is-active .spin-ccw{animation-duration:12s}
+.ev-sigil.is-active svg{
+  filter:drop-shadow(0 0 14px rgba(176,141,87,.44)) drop-shadow(0 0 28px rgba(61,167,160,.28));
+}
+
+/* run drawings on invoke */
+.ev-sigil.is-active .ev-glyph,
+.ev-sigil.is-active .ev-node{animation-play-state:running}
+
+/* sparks */
+.ev-burst{position:absolute; inset:0; pointer-events:none; overflow:visible}
+.ev-spark{
+  position:absolute; left:50%; top:50%; width:8px; height:8px; border-radius:50%;
+  background:radial-gradient(circle, #e2caa3, rgba(226,202,163,0) 70%);
+  box-shadow:0 0 12px rgba(226,202,163,.5);
+  transform:translate(-50%,-50%) scale(.6);
+  opacity:0; filter:blur(.25px);
+  animation:ev-spark 1.15s ease-out forwards;
+}
+@keyframes ev-spark{
+  0%{opacity:0; transform:translate(-50%,-50%) scale(.6)}
+  12%{opacity:.95}
+  100%{opacity:0; transform:translate(calc(-50% + var(--tx,0px)), calc(-50% + var(--ty,0px))) rotate(var(--rot,0deg)) scale(1.05); filter:blur(.8px)}
+}
+
+/* fading imprint (“memory”) */
+.ev-echo{mix-blend-mode:screen; opacity:.92; animation:ev-echo-fade 26s ease-out forwards}
+.ev-echo .ev-glyph,
+.ev-echo .ev-node{animation:none; stroke-dashoffset:0}
+@keyframes ev-echo-fade{
+  0%  {opacity:.92; filter:blur(0)}
+  35% {opacity:.85}
+  70% {opacity:.45}
+  100%{opacity:0;  filter:blur(1.2px)}
+}
+
+  body::before{ /* auroras / occult glow */
+    content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+    background:
+      radial-gradient(90% 70% at 20% -10%, rgba(61,167,160,.12), transparent 60%),
+      radial-gradient(80% 70% at 80% 110%, rgba(120,18,28,.14), transparent 60%),
+      radial-gradient(60% 60% at 10% 120%, rgba(40,70,120,.10), transparent 60%);
+    mix-blend-mode:screen; opacity:.9; animation:bgPulse 28s ease-in-out infinite alternate;
+  }
+  body::after{ /* drifting fog */
+    content:""; position:fixed; inset:-10%; pointer-events:none; z-index:0;
+    background:
+      radial-gradient(60% 40% at 20% 10%, rgba(220,240,255,.045), transparent 60%),
+      radial-gradient(55% 45% at 80% 20%, rgba(220,240,255,.035), transparent 60%),
+      radial-gradient(60% 50% at 60% 80%, rgba(200,220,255,.04), transparent 60%);
+    filter:blur(20px) saturate(.9);
+    animation:fogDrift 120s linear infinite;
+  }
+  .wrap{max-width:1280px;margin:28px auto 96px;padding:0 18px; position:relative; z-index:1}
+
+  /* Faint rotating sigil */
+  .wrap::after{
+    content:""; position:fixed; left:-10vmin; top:22vh; width:72vmin; height:72vmin; border-radius:50%;
+    background:
+      repeating-conic-gradient(from 45deg, rgba(176,141,87,.22) 0 6deg, transparent 6deg 18deg);
+    mask:radial-gradient(closest-side, transparent 46%, #000 47%, #000 53%, transparent 54%);
+    -webkit-mask:radial-gradient(closest-side, transparent 46%, #000 47%, #000 53%, transparent 54%);
+    opacity:.22; filter:blur(.4px); z-index:0; pointer-events:none;
+    animation:sigilSpin 120s linear infinite;
+  }
+
+  @keyframes bgPulse{0%{opacity:.85}100%{opacity:1}}
+  @keyframes fogDrift{0%{transform:translate3d(-2%,0,0) scale(1)}50%{transform:translate3d(2%,-1%,0) scale(1.02)}100%{transform:translate3d(-2%,0,0) scale(1)}}
+  @keyframes moonFloat{0%{transform:translateY(0) scale(1)}100%{transform:translateY(10px) scale(1.02)}}
+  @keyframes sigilSpin{to{transform:rotate(360deg)}}
+/* ===== Spell modal with side art (full image) ===== */
+.modal-split{
+  display:grid;
+  grid-template-columns: 1fr min(42%, 380px);
+  gap:16px;
+}
+@media (max-width:860px){ .modal-split{ grid-template-columns: 1fr; } }
+
+.modal-art{
+  display:flex; flex-direction:column; gap:10px;
+}
+/* ===== Spell popup: full image with rounded corners ===== */
+.modal-split{
+  display:grid;
+  grid-template-columns: 1fr min(42%, 380px);
+  gap:16px;
+}
+@media (max-width:860px){ .modal-split{ grid-template-columns: 1fr; } }
+
+.modal-art{ display:flex; flex-direction:column; gap:10px; }
+.modal-art .artbox{
+  width:100%;
+  height:min(60vh, 520px);
+  border-radius:14px;
+  border:1px solid var(--line);
+  background:#0b0f14;
+  box-shadow:var(--glow);
+  overflow:hidden;                 /* clips to rounded corners */
+  display:grid; place-items:center;
+  cursor:zoom-in;
+}
+.modal-art .artbox.is-zoom{ height:min(80vh, 720px); cursor:zoom-out; }
+.modal-art .artimg{
+  width:100%; height:100%;
+  object-fit:contain;              /* show entire image, no crop */
+  border-radius:inherit;           /* rounded edges on the image */
+  display:block;
+}
+.modal-art .hint{ font-size:12px; color:#a8a29a; }
+
+.modal-art .artbox{
+  width:100%;
+  height:min(100vh, 520px);
+  border-radius:14px;
+  border:1px solid var(--line);
+  background:#0b0f14;
+  box-shadow:var(--glow);
+  display:grid; place-items:center;
+  overflow:hidden; /* keep rounded corners on zoom */
+  cursor:zoom-in;
+}
+.modal-art .artbox.is-zoom{ height:min(80vh, 720px); cursor:zoom-out; }
+.modal-art .artimg{
+  width:100%; height:100%;
+  object-fit: contain; /* show the whole card, no cropping */
+}
+.modal-art .hint{ font-size:12px; color:#a8a29a; }
+
+  h3{margin:0 0 8px;font-variant:small-caps;letter-spacing:.12em;color:var(--brass);font-size:19px}
+  header.sheet-head{display:grid;grid-template-columns:220px 1fr;gap:var(--gap-lg)}
+  .portrait{background:conic-gradient(from 180deg at 50% 0%, rgba(61,167,160,.05), transparent 45%),var(--panel);
+    border:1px solid var(--line);border-radius:var(--radius);padding:26px;box-shadow:var(--glow);display:flex;flex-direction:column;gap:14px}
+  .portrait img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:var(--r-sm);outline:1px solid #2a2f3a;cursor:pointer}
+  .portrait .hint{font-size:12px;color:#a8a29a;text-align:center}
+  .id-block{background:radial-gradient(420px 190px at 15% 120%, rgba(61,167,160,.12),transparent 60%),var(--panel);
+    border:1px solid var(--line);border-radius:var(--radius);padding:26px;box-shadow:var(--glow);
+    display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:18px}
+  .id-row{display:flex;flex-direction:column;gap:6px}.id-row label{font-size:13px;color:var(--muted);letter-spacing:.06em}
+  .id-row input,.id-row select{background:linear-gradient(180deg,#0e1218,#0b0f14);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+  .bar{margin-top:12px;display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+  .btn{background:linear-gradient(180deg,#191c23,#10131a);color:var(--ink);border:1px solid #312a1f;padding:10px 14px;border-radius:12px;cursor:pointer;box-shadow:var(--glow)}
+  .btn:hover{filter:brightness(1.06)}.btn.ghost{background:transparent;border-color:#3a3226}.btn.warn{background:linear-gradient(180deg,#2a1717,#1b1111);border-color:#3a1b1b}
+  .pill{padding:6px 12px;border:1px solid var(--line);border-radius:999px;font-size:13px}
+  .grid{margin-top:26px;display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr) minmax(0,400px);gap:var(--gap-lg)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--glow);padding:18px;display:flex;flex-direction:column;gap:12px;overflow:hidden}
+  .scroll{max-height:clamp(220px,36vh,420px);overflow:auto;padding-right:6px}.tight{max-height:clamp(160px,30vh,320px)}
+  .ability-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:14px}
+  .ability{background:linear-gradient(180deg,#0f1218,#0b0f14);border:1px solid var(--line);border-radius:14px;padding:10px;display:grid;place-items:center;gap:6px}
+  .ability input{width:72px;text-align:center;font-weight:700;font-size:20px;background:#0b0f14;color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:8px}
+  .chip{background:linear-gradient(180deg,#0f1319,#0c1016);border:1px dashed #3a3226;padding:8px 10px;border-radius:12px;color:var(--muted);display:flex;align-items:center;gap:8px}
+  .chip input{flex:0 0 72px;max-width:72px;text-align:center;background:#0b0f14;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:8px}
+  .two-col{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+  .three-col{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+  .row{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:10px}
+  textarea.slim{width:100%;min-height:110px;max-height:280px;resize:vertical;background:transparent;border:0;color:var(--ink);outline:none;font:inherit}
+  .table{width:100%;border-collapse:separate;border-spacing:0 8px}.table th{font-size:13px;color:#d6c7ab;text-align:left;padding:0 8px}
+  .table td{background:var(--panel-2);border:1px solid var(--line);padding:10px}.table td:first-child{border-radius:12px 0 0 12px}.table td:last-child{border-radius:0 12px 12px 0}
+  .tag{padding:6px 10px;background:#0b0f14;border:1px solid var(--line);border-radius:999px;font-size:13px;color:#e2caa3}.stack{display:flex;gap:8px;flex-wrap:wrap}
+  .deck{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;max-height:clamp(240px,42vh,460px);overflow:auto;padding-right:6px}
+  .tcard{position:relative;height:136px;border-radius:14px;border:1px solid #3a3226;background:linear-gradient(160deg,#141822 0%,#0f1319 60%,#0a0d12 100%);box-shadow:0 10px 30px rgba(0,0,0,.4),inset 0 0 0 1px rgba(176,141,87,.18);overflow:hidden;cursor:pointer}
+  .tcard img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.24;filter:grayscale(.3) contrast(1.1) saturate(.8)}
+  .tcard .name{position:absolute;left:10px;top:8px;right:10px;font-variant:small-caps;letter-spacing:.08em;color:#e2caa3;font-size:14px}
+  .tcard .meta{position:absolute;left:10px;bottom:8px;right:10px;color:#a8a29a;font-size:12px}
+  .tcard.prepared{outline:1px solid var(--brass)}.tcard.ritual{box-shadow:0 0 0 1px rgba(61,167,160,.22),inset 0 0 0 1px rgba(61,167,160,.22),0 10px 30px rgba(0,0,0,.4)}
+  .modal-back{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50}
+  .modal{width:min(920px,calc(100% - 28px));max-height:86vh;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:0 20px 80px rgba(0,0,0,.65);padding:20px}
+  .modal h2{margin:0 0 8px;font-variant:small-caps;letter-spacing:.08em;color:var(--brass)}
+  .kv{display:grid;grid-template-columns:200px 1fr;gap:10px;padding:4px 0}.sec{margin-top:12px;background:var(--panel-2);border:1px solid var(--line);padding:14px;border-radius:14px}
+  @media (max-width:1180px){.grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)} .right{grid-column:1/-1} .id-block{grid-template-columns:repeat(3,minmax(0,1fr))}}
+  @media (max-width:920px){header.sheet-head{grid-template-columns:1fr}}
+  @media (max-width:760px){.grid{grid-template-columns:1fr} .id-block{grid-template-columns:repeat(2,minmax(0,1fr))} .deck{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media print{
+    .btn,.bar,.portrait input[type=file]{display:none!important}
+    body::before,body::after,.wrap::before,.wrap::after{display:none!important}
+    .wrap{max-width:none;padding:0}
+    .card,.portrait,.id-block{box-shadow:none;border-color:#ccc;background:#fff}
+    .row,.chip,.tcard{background:#fff!important}
+  }
+</style>
+</head>
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+<meta name="theme-color" content="#0a0b0d">
+<body>
+  <!-- === Background Video === -->
+<div class="bgvid" aria-hidden="true">
+  <video id="bgVideo"
+         playsinline
+         autoplay
+         muted
+         loop
+         preload="metadata"
+         poster="bg_poster.jpg">
+    <source src="Elias V5.mp4"  type="video/mp4">
+    <source src="bg.webm" type="video/webm">
+  </video>
+
+
+</div>
+<!-- === /Background Video === -->
+
+<div class="wrap">
+  <header class="sheet-head">
+    <div class="portrait">
+      <img id="portraitImg" alt="Portrait" decoding="async" src="Elias Verren.png"/>
+      <input id="portraitInput" type="file" accept="image/*" style="display:none"/>
+      <div class="hint">Click the portrait to change</div>
+    </div>
+    <div>
+      <div class="id-block">
+        <div class="id-row"><label>Character Name</label><input id="charName" value="Elias Verren"></div>
+        <div class="id-row"><label>Class & Level</label><input id="charClass" value="Wizard 1"></div>
+        <div class="id-row"><label>Background</label><input id="charBg" value="Sage (Researcher)"></div>
+        <div class="id-row"><label>Race</label><input id="charRace" value="Human (Variant)"></div>
+        <div class="id-row"><label>Alignment</label><input id="charAlign" value="Neutral Good"></div>
+        <div class="id-row"><label>Player</label><input id="playerName" value="Tristan"></div>
+        <div class="id-row"><label>Proficiency</label><input id="profBonus" type="number" value="2"></div>
+        <div class="id-row"><label>Spell Ability</label>
+          <select id="spellAbility"><option value="INT" selected>INT</option><option value="WIS">WIS</option><option value="CHA">CHA</option></select>
+        </div>
+        <div class="id-row"><label>XP</label><input id="xp" type="number" value="0"></div>
+        <div class="id-row"><label>Campaign</label><input id="campaign" value=""></div>
+        <div class="id-row"><label>Speed</label><input id="speed" value="30 ft"></div>
+        <div class="id-row"><label>Hit Dice</label><input id="hitDice" value="1d6"></div>
+      </div>
+      <div class="bar">
+        <button class="btn" id="printBtn">Print</button>
+        <button class="btn" id="bagBtn">Bag</button>
+        <button class="btn" id="famBtn">Familiar</button>
+        <button class="btn" id="trackBtn">Track (Raven + Cane)</button>
+        <button class="btn" id="manageSlotsBtn">Spell Slots</button>
+        <span class="pill">d20:
+          <label><input type="radio" name="rmode" value="normal" checked> Normal</label>
+          <label><input type="radio" name="rmode" value="adv"> Adv</label>
+          <label><input type="radio" name="rmode" value="dis"> Dis</label>
+        </span>
+        <button class="btn warn" id="resetBtn" title="Clear saved data">Reset</button>
+      </div>
+    </div>
+  </header>
+
+  <section class="grid">
+    <!-- LEFT -->
+    <div class="left">
+      <div class="card">
+        <h3>Core</h3>
+        <div class="ability-grid">
+          <div class="ability"><div>STR</div><input data-ability="STR" type="number" value="8"><div style="font-size:13px;color:#a8a29a" data-mod="STR">mod -1</div></div>
+          <div class="ability"><div>DEX</div><input data-ability="DEX" type="number" value="14"><div style="font-size:13px;color:#a8a29a" data-mod="DEX">mod +2</div></div>
+          <div class="ability"><div>CON</div><input data-ability="CON" type="number" value="12"><div style="font-size:13px;color:#a8a29a" data-mod="CON">mod +1</div></div>
+          <div class="ability"><div>INT</div><input data-ability="INT" type="number" value="16"><div style="font-size:13px;color:#a8a29a" data-mod="INT">mod +3</div></div>
+          <div class="ability"><div>WIS</div><input data-ability="WIS" type="number" value="10"><div style="font-size:13px;color:#a8a29a" data-mod="WIS">mod +0</div></div>
+          <div class="ability"><div>CHA</div><input data-ability="CHA" type="number" value="14"><div style="font-size:13px;color:#a8a29a" data-mod="CHA">mod +2</div></div>
+        </div>
+        <div class="three-col">
+          <div class="chip">AC (Mage Armor) <input id="ac" type="number" value="15"></div>
+          <div class="chip">Initiative <input id="init" type="number" value="2"></div>
+          <div class="chip">Speed <input id="speed2" value="30 ft"></div>
+        </div>
+        <div class="three-col">
+          <div class="chip">HP <input id="hp" type="number" value="7"></div>
+          <div class="chip">Max HP <input id="hpMax" type="number" value="7"></div>
+          <div class="chip">Coins (gp) <input id="coins" type="number" value="10"></div>
+        </div>
+        <div class="three-col">
+          <div class="chip">Inspiration <input id="insp" value="0"></div>
+          <div class="chip">Exhaustion <input id="exh" value="0"></div>
+          <div class="chip">Death Saves <input id="ds" value="0/0"></div>
+        </div>
+        <div class="two-col">
+          <div class="chip">Arcana Charges <input id="arcCharges" value="3"></div>
+          <div class="chip">Tarot Cards (count) <input id="tarotCount" value="52"></div>
+        </div>
+        <div class="stack" id="buffsBar"></div>
+        <div class="stack">
+          <input id="diceExpr" style="flex:1;background:#0b0f14;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px" placeholder="Dice (e.g., 1d20+5, 2d6+INT, +PROF)"/>
+          <button class="btn" id="rollBtn">Roll</button>
+          <button class="btn ghost" id="concBtn">Concentration Check</button>
+        </div>
+      </div>
+            <br>
+
+      <div class="card">
+        <h3>Saving Throws</h3>
+        <div class="scroll tight">
+          <div class="row"><input type="checkbox" data-save-prof="STR"><div class="label">STR</div><button class="btn" data-roll-save="STR">Roll</button></div>
+          <div class="row"><input type="checkbox" data-save-prof="DEX"><div class="label">DEX</div><button class="btn" data-roll-save="DEX">Roll</button></div>
+          <div class="row"><input type="checkbox" data-save-prof="CON"><div class="label">CON</div><button class="btn" data-roll-save="CON">Roll</button></div>
+          <div class="row"><input type="checkbox" data-save-prof="INT" checked><div class="label">INT (prof)</div><button class="btn" data-roll-save="INT">Roll</button></div>
+          <div class="row"><input type="checkbox" data-save-prof="WIS" checked><div class="label">WIS (prof)</div><button class="btn" data-roll-save="WIS">Roll</button></div>
+          <div class="row"><input type="checkbox" data-save-prof="CHA"><div class="label">CHA</div><button class="btn" data-roll-save="CHA">Roll</button></div>
+        </div>
+      </div>
+            <br>
+
+      <div class="card">
+        <h3>Skills</h3>
+        <div class="scroll tight">
+          <div class="row"><input type="checkbox" data-skill="Arcana" data-abil="INT" checked><div class="label">Arcana (INT) <span style="color:#a8a29a;font-size:13px">prof</span></div><button class="btn" data-roll-skill="Arcana">Roll</button></div>
+          <div class="row"><input type="checkbox" data-skill="History" data-abil="INT" checked><div class="label">History (INT) <span style="color:#a8a29a;font-size:13px">prof</span></div><button class="btn" data-roll-skill="History">Roll</button></div>
+          <div class="row"><input type="checkbox" data-skill="Investigation" data-abil="INT" checked><div class="label">Investigation (INT) <span style="color:#a8a29a;font-size:13px">prof</span></div><button class="btn" data-roll-skill="Investigation">Roll</button></div>
+          <div class="row"><input type="checkbox" data-skill="Nature" data-abil="INT"><div class="label">Nature (INT)</div><button class="btn" data-roll-skill="Nature">Roll</button></div>
+          <div class="row"><input type="checkbox" data-skill="Religion" data-abil="INT"><div class="label">Religion (INT)</div><button class="btn" data-roll-skill="Religion">Roll</button></div>
+          <div class="row"><input type="checkbox" data-skill="Insight" data-abil="WIS" checked><div class="label">Insight (WIS) <span style="color:#a8a29a;font-size:13px">prof</span></div><button class="btn" data-roll-skill="Insight">Roll</button></div>
+          <div class="row"><input type="checkbox" data-skill="Perception" data-abil="WIS"><div class="label">Perception (WIS)</div><button class="btn" data-roll-skill="Perception">Roll</button></div>
+          <div class="row"><input type="checkbox" data-skill="Medicine" data-abil="WIS"><div class="label">Medicine (WIS)</div><button class="btn" data-roll-skill="Medicine">Roll</button></div>
+          <div class="row"><input type="checkbox" data-skill="Survival" data-abil="WIS"><div class="label">Survival (WIS)</div><button class="btn" data-roll-skill="Survival">Roll</button></div>
+          <div class="row"><input type="checkbox" data-skill="Acrobatics" data-abil="DEX"><div class="label">Acrobatics (DEX)</div><button class="btn" data-roll-skill="Acrobatics">Roll</button></div>
+          <div class="row"><input type="checkbox" data-skill="Sleight of Hand" data-abil="DEX"><div class="label">Sleight of Hand (DEX)</div><button class="btn" data-roll-skill="Sleight of Hand">Roll</button></div>
+          <div class="row"><input type="checkbox" data-skill="Stealth" data-abil="DEX"><div class="label">Stealth (DEX)</div><button class="btn" data-roll-skill="Stealth">Roll</button></div>
+          <div class="row"><input type="checkbox" data-skill="Deception" data-abil="CHA" checked><div class="label">Deception (CHA) <span style="color:#a8a29a;font-size:13px">prof</span></div><button class="btn" data-roll-skill="Deception">Roll</button></div>
+          <div class="row"><input type="checkbox" data-skill="Performance" data-abil="CHA"><div class="label">Performance (CHA)</div><button class="btn" data-roll-skill="Performance">Roll</button></div>
+          <div class="row"><input type="checkbox" data-skill="Persuasion" data-abil="CHA"><div class="label">Persuasion (CHA)</div><button class="btn" data-roll-skill="Persuasion">Roll</button></div>
+          <div class="row"><input type="checkbox" data-skill="Athletics" data-abil="STR"><div class="label">Athletics (STR)</div><button class="btn" data-roll-skill="Athletics">Roll</button></div>
+        </div>
+      </div>
+            <br>
+
+      <div class="card">
+        <h3>Passives & Conditions</h3>
+        <div class="three-col">
+          <div class="chip">Passive Perception <input id="pp" value="10"></div>
+          <div class="chip">Passive Investigation <input id="pi" value="15"></div>
+          <div class="chip">Passive Insight <input id="ps" value="12"></div>
+        </div>
+        <div class="scroll tight">
+          <div class="row"><div class="label">Conditions</div>
+            <div class="stack" style="grid-column:2/4">
+              <label class="tag"><input type="checkbox"> Blinded</label>
+              <label class="tag"><input type="checkbox"> Charmed</label>
+              <label class="tag"><input type="checkbox"> Deafened</label>
+              <label class="tag"><input type="checkbox"> Frightened</label>
+              <label class="tag"><input type="checkbox"> Grappled</label>
+              <label class="tag"><input type="checkbox"> Invisible</label>
+              <label class="tag"><input type="checkbox"> Paralyzed</label>
+              <label class="tag"><input type="checkbox"> Poisoned</label>
+              <label class="tag"><input type="checkbox"> Prone</label>
+              <label class="tag"><input type="checkbox"> Restrained</label>
+              <label class="tag"><input type="checkbox"> Stunned</label>
+              <label class="tag"><input type="checkbox"> Unconscious</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MIDDLE -->
+    <div class="mid">
+      <div class="card">
+        <h3>Attacks & Weapons</h3>
+        <table class="table"><thead><tr><th>Name</th><th>Attack</th><th>Damage</th><th>Props</th><th></th></tr></thead></table>
+        <div class="scroll tight" id="weaponsList"></div>
+        <div class="two-col">
+          <button class="btn" id="addWeaponBtn">Add Weapon</button>
+          <button class="btn" id="longRestBtn">Long Rest</button>
+        </div>
+        <div class="two-col">
+          <div class="chip">Bolts (Light Xbow) <input id="bolts" value="20"></div>
+          <div class="chip">Card Ammo (Thrown) <input id="cardAmmo" value="10"></div>
+        </div>
+      </div>
+            <br>
+
+      <div class="card">
+        <h3>Spells: Tarot Spellbook</h3>
+        <div class="stack" id="spellFilters">
+          <span class="tag clickable" data-spell-filter="all">All</span>
+          <span class="tag clickable" data-spell-filter="prepared">Prepared</span>
+          <span class="tag clickable" data-spell-filter="ritual">Rituals</span>
+          <span class="tag clickable" data-spell-filter="0">Cantrips</span>
+          <span class="tag clickable" data-spell-filter="1">L1</span>
+          <span class="pill">View:
+            <label><input type="radio" name="viewmode" value="deck" id="viewDeck" checked> Deck</label>
+            <label><input type="radio" name="viewmode" value="list" id="viewList"> List</label>
+          </span>
+          <div class="chip">Save DC <input id="spellDC" type="number" value="13"></div>
+          <div class="chip">Spell Atk <input id="spellAtk" type="text" value="+5"></div>
+          <button class="btn ghost" id="importSpells">Import</button>
+          <button class="btn ghost" id="exportSpells">Export</button>
+        </div>
+        <div id="deckWrap" class="deck"></div>
+        <div id="spellsList" class="scroll" style="display:none"></div>
+        <div class="stack">
+          <button class="btn" id="addSpellBtn">Add Spell</button>
+          <button class="btn ghost" id="prepInfoBtn">Prepared Info</button>
+        </div>
+      </div>
+            <br>
+
+      <div class="card">
+        <h3>Tarot: Major Arcana Effects</h3>
+        <div class="stack">
+          <div class="chip">Charges (per LR) <input id="arcPerLongRest" value="INT"></div>
+          <button class="btn ghost" id="arcExport">Export Arcana</button>
+          <button class="btn ghost" id="arcImport">Import Arcana</button>
+        </div>
+        <div id="arcDeck" class="deck"></div>
+      </div>
+            <br>
+
+      <div class="card">
+        <h3>Leads & Case Log</h3>
+        <div class="scroll" id="caseList"></div>
+        <div class="two-col">
+          <button class="btn" id="addCase">Add Lead</button>
+          <button class="btn ghost" id="exportCase">Copy Case Log</button>
+        </div>
+      </div>
+            <br>
+
+      <div class="card">
+        <h3>Tracking: Raven + Cane</h3>
+        <div class="two-col">
+          <div class="chip"><label><input type="checkbox" id="trkHelp" checked> Raven Help (adv)</label></div>
+          <div class="chip"><label><input type="checkbox" id="trkMethodical"> Methodical: INT instead of WIS</label></div>
+        </div>
+        <div class="two-col">
+          <button class="btn" id="rollSurv">Survival (WIS)</button>
+          <button class="btn" id="rollInv">Investigation (INT)</button>
+        </div>
+        <div class="stack">
+          <span class="tag">Cane: scuffs & residue</span>
+          <span class="tag">Raven: aerial pathing</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="right">
+      <div class="card">
+        <h3>Proficiencies & Languages</h3>
+        <div class="scroll tight">
+          <p class="slim" id="profs">Armor:<br> 
+<br>Weapons: Daggers, darts, slings, quarterstaffs, light crossbows<br>
+<br>Tools:<br>
+<br>Languages: Common, Deep Speech, Celestial</p>
+        </div>
+      </div>
+            <br>
+
+      <div class="card">
+        <h3>Equipment</h3>
+        <div class="scroll tight">
+          <textarea class="slim" id="equipment">Component pouch; tarot deck (spellbook & focus); spellbook (tarot motifs); scholar’s pack (book of lore, ink, quill, parchment, sand, small knife); common clothes; 10 gp; letter from a late colleague with an unsolved question; cane (oaken, silver head); tarot card deck (weighted); light crossbow; 20 bolts.</textarea>
+        </div>
+        <div class="two-col">
+          <button class="btn" id="addToBagFromEquip">Add All to Bag</button>
+          <button class="btn ghost" id="bagBtn2">Open Bag</button>
+        </div>
+      </div>
+            <br>
+
+      <div class="card">
+        <h3>Feat: Actor</h3>
+        <div class="scroll tight">
+          <p class="slim" id="features">Advantage on Deception/Performance when impersonating; can mimic a voice or sound after a minute of study.
+</p>
+        </div>
+      </div>
+      <br>
+            <div class="card">
+        <h3>Spellcasting Wizard</h3>
+        <div class="scroll tight">
+          <p class="slim" id="features">INT-based; ritual cast wizard spells from your spellbook without preparing them.
+Arcane Recovery. After a short rest, recover expended spell slots with combined levels = 1 (1st).
+          </p>
+        </div>
+      </div>
+            <br>
+                        <div class="card">
+        <h3>Background: Researcher.</h3>
+        <div class="scroll tight">
+          <p class="slim" id="features">When you don’t know a fact, you know where to find it.
+Tarot Spellbook. Tarot deck is your spellbook & arcane focus.
+Raven & Cane Method. Raven scouts; cane reads traces. Use Tracking card for rolls.</p>
+        </div>
+      </div>
+            <br>
+
+      <div class="card">
+        <h3>Identities & Disguises</h3>
+        <div class="scroll tight" id="idsList"></div>
+        <div class="two-col">
+          <button class="btn" id="addId">Add Identity</button>
+          <button class="btn ghost" id="exportIds">Copy Identities</button>
+        </div>
+      </div>
+            <br>
+
+      <div class="card">
+        <h3>Contacts & Favors</h3>
+        <div class="scroll tight" id="contactsList"></div>
+        <div class="two-col">
+          <button class="btn" id="addContact">Add Contact</button>
+          <button class="btn ghost" id="exportContacts">Copy Contacts</button>
+        </div>
+      </div>
+            <br>
+
+      <div class="card">
+        <h3>Hook</h3>
+        <div class="scroll tight">
+          <p class="slim" id="hookText">An antique ledger writes in red ink about events that haven't yet occurred. It references people/places you can drop into any city. One faction wants it destroyed; another wants it completed. New entries appear after certain dreams. Three missing mechanisms unlock more pages. Use as a flexible engine for social intrigue, horror, and investigations—scale to campaign tone.</p>
+        </div>
+      </div>
+      <br>
+
+      <div class="card">
+        <h3>Macros</h3>
+        <div class="scroll tight" id="macroList"></div>
+        <div class="two-col">
+          <button class="btn" id="addMacro">Add Macro</button>
+          <button class="btn ghost" id="exportMacros">Copy Macros</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+<!-- OCCULT SIGIL — ELIAS VERREN -->
+<div class="ev-sigil" id="evSigil" aria-label="Elias's Sigil" title="Click to invoke">
+  <svg viewBox="0 0 300 300" preserveAspectRatio="xMidYMid meet" role="img">
+    <defs>
+      <filter id="evGlow" x="-60%" y="-60%" width="220%" height="220%">
+        <feGaussianBlur stdDeviation="2.1" result="b"/>
+        <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+
+      <linearGradient id="evBrass" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%"  stop-color="#d1b17b"/>
+        <stop offset="55%" stop-color="#b08d57"/>
+        <stop offset="100%" stop-color="#7f6337"/>
+      </linearGradient>
+
+      <!-- perfect text tracks -->
+      <path id="evOuter" d="M150,150 m-112,0a112,112 0 1,1 224,0a112,112 0 1,1 -224,0"/>
+      <path id="evInner" d="M150,150 m-84,0a84,84 0 1,1 168,0a84,84 0 1,1 -168,0"/>
+    </defs>
+
+    <!-- rings (kept inside bounds so nothing clips) -->
+    <g class="ev-rings" style="transform-origin:150px 150px">
+      <circle cx="150" cy="150" r="120" class="ev-ring spin-cw"/>
+      <circle cx="150" cy="150" r="104" class="ev-ring ev-ring--thin spin-ccw"/>
+      <circle cx="150" cy="150" r="96"  class="ev-ring ev-ring--dotted spin-cw"/>
+      <circle cx="150" cy="150" r="88"  class="ev-ring ev-ring--teal spin-ccw"/>
+      <circle cx="150" cy="150" r="72"  class="ev-ring spin-cw"/>
+    </g>
+
+    <!-- inscriptions -->
+    <g class="ev-words" filter="url(#evGlow)">
+      <text class="ev-text">
+        <textPath href="#evOuter">
+          ✶ SIGILLUM • ELIAS • VERREN • CORVUS OCULUS • LEX OCCULTA • NOX
+        </textPath>
+      </text>
+      <text class="ev-text ev-text--inner">
+        <textPath href="#evInner" startOffset="50%">
+          ☿ ✧ ☌ ✦ ☽ ✧ ✶ ✧ ☌ ✦
+        </textPath>
+      </text>
+    </g>
+
+    <!-- echo layer: we’ll drop fading “imprints” here -->
+    <g id="evEcho"></g>
+
+    <!-- INVOKED LINES (get drawn on click) -->
+    <g id="evInvoke" filter="url(#evGlow)">
+      <!-- septagram (LotM vibe) -->
+      <g class="ev-sept">
+        <path id="arm" class="ev-glyph" d="M150 84 L198 216"/>
+        <use href="#arm" transform="rotate(51.428 150 150)"/>
+        <use href="#arm" transform="rotate(102.856 150 150)"/>
+        <use href="#arm" transform="rotate(154.284 150 150)"/>
+        <use href="#arm" transform="rotate(205.712 150 150)"/>
+        <use href="#arm" transform="rotate(257.140 150 150)"/>
+        <use href="#arm" transform="rotate(308.568 150 150)"/>
+      </g>
+
+      <!-- EV monogram -->
+      <path class="ev-glyph ev-monogram"
+            d="M126 116 V184 M126 116 H162 M126 150 H156 M126 184 H162
+               M174 116 L196 184 L216 116"/>
+
+      <!-- raven head + eye -->
+      <path class="ev-glyph"
+            d="M124 155 L206 144 L124 133"/>
+      <path class="ev-glyph"
+            d="M124 133 C110 150, 110 158, 124 176 C148 185, 173 176, 188 163"/>
+      <circle class="ev-glyph" cx="176" cy="144" r="3.5"/>
+
+      <!-- four personal runes (cane, feather, eye, ledger) -->
+      <g class="ev-nodes">
+        <!-- North: cane -->
+        <g transform="translate(150,150) rotate(0) translate(0,-58)">
+          <path class="ev-node" d="M0 -10 V 18" />
+          <circle class="ev-node" cx="0" cy="-12" r="3.5"/>
+        </g>
+        <!-- East: raven feather -->
+        <g transform="translate(150,150) rotate(90) translate(0,-58)">
+          <path class="ev-node" d="M-10 3 C-2 -6, 8 -6, 10 3 C4 2,-2 6,-10 3"/>
+          <path class="ev-node" d="M-6 4 L6 -2"/>
+        </g>
+        <!-- South: all-seeing eye -->
+        <g transform="translate(150,150) rotate(180) translate(0,-58)">
+          <path class="ev-node" d="M-12 0 Q0 -8 12 0 Q0 8 -12 0 Z"/>
+          <circle class="ev-node" cx="0" cy="0" r="2.5"/>
+        </g>
+        <!-- West: ledger page -->
+        <g transform="translate(150,150) rotate(270) translate(0,-58)">
+          <path class="ev-node" d="M-10 -8 H10 V8 H-10 Z"/>
+          <path class="ev-node" d="M-10 -2 H10 M-10 2 H6"/>
+        </g>
+      </g>
+    </g>
+  </svg>
+
+  <!-- sparks container -->
+  <div class="ev-burst"></div>
+</div>
+
+
+<!-- Modal -->
+<div class="modal-back" id="modalBack"><div class="modal" id="modal"><span id="modalClose" style="float:right;cursor:pointer;color:#a8a29a">✕</span><div id="modalContent"></div></div></div>
+
+<script>
+/* ===== CORE UTIL ===== */
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+const stateKey='eliasVerren.wizard.tarot.v8';
+const abilKeys=['STR','DEX','CON','INT','WIS','CHA'];
+const abilMod = v => Math.floor((parseInt(v||0,10)-10)/2);
+const fmt = n => (n>=0?`+${n}`:`${n}`);
+const rollMode = ()=>document.querySelector('input[name="rmode"]:checked')?.value || 'normal';
+const d = n => 1+Math.floor(Math.random()*n);
+function d20(mod=0,{adv=false,dis=false}={}){const r1=d(20),r2=d(20);let take=r1,n='(normal)'; if(adv&&!dis){take=Math.max(r1,r2);n=`(adv ${r1}/${r2})`} else if(dis&&!adv){take=Math.min(r1,r2);n=`(dis ${r1}/${r2})`} return {total:take+mod,mod,take,n,r1,r2};}
+function rollExpr(expr,abilities,prof){const clean=(expr||'').trim().toUpperCase(); if(!clean)return{total:0,detail:'—'}; let total=0,parts=[]; for(let t of clean.split(/(?=[+\-])/g)){t=t.trim(); if(!t)continue;
+  if(/^[-+]?\d+$/.test(t)){total+=parseInt(t,10); parts.push(t); continue;}
+  if(/^[+\-]?(?:\d*)D\d+$/i.test(t)){const s=t.startsWith('-')?-1:1; const m=t.match(/([+\-]?)(\d*)D(\d+)/); const c=parseInt(m[2]||'1',10),sides=parseInt(m[3],10); let sum=0,arr=[]; for(let i=0;i<c;i++){const r=d(sides); sum+=r; arr.push(r);} total+=s*sum; parts.push(`${s<0?'-':''}${c}d${sides}[${arr.join(',')}]`); continue;}
+  if(/^[+\-](STR|DEX|CON|INT|WIS|CHA)$/.test(t)){const s=t.startsWith('-')?-1:1; const k=t.slice(1); const m=abilities[k]||0; total+=s*m; parts.push(`${s<0?'-':'+'}${k}(${m})`); continue;}
+  if(t==='+PROF'||t==='-PROF'){const s=t==='-PROF'?-1:1; total+=s*prof; parts.push(`${s<0?'-':'+'}PROF(${prof})`); continue;}
+  parts.push(`?${t}`);
+} return {total,detail:parts.join(' ')};}
+function openModal(html){$('#modalContent').innerHTML=html; $('#modalBack').style.display='flex';}
+function closeModal(){ $('#modalBack').style.display='none'; }
+
+/* ===== DEFAULTS ===== */
+const defaultWeapons=[
+  {id:'tarot',name:'Tarot Cards',base:'Dart',ability:'DEX',proficient:true,attackFormula:'+DEX+PROF',damageFormula:'1d4+DEX',damageType:'piercing',properties:['FINESSE','THROWN','RANGE 20/60'],notes:'Weighted, etched cards. Also spellbook/focus.'},
+  {id:'cane',name:'Cane',base:'Club',ability:'STR',proficient:true,attackFormula:'+STR+PROF',damageFormula:'1d4+STR',damageType:'bludgeoning',properties:['LIGHT'],notes:'Oaken walking stick with silver head.'},
+  {id:'lxb',name:'Light Crossbow',base:'Light Crossbow',ability:'DEX',proficient:true,attackFormula:'+DEX+PROF',damageFormula:'1d8+DEX',damageType:'piercing',properties:['AMMUNITION','LOADING','TWO-HANDED','RANGE 80/320'],notes:'Waxed string, oiled to a whisper.'},
+  {id:'spellatk',name:'Spell Attack',base:'—',ability:'INT',proficient:true,attackFormula:'+INT+PROF',damageFormula:'',damageType:'',properties:[],notes:'Use for attack-roll spells.'}
+];
+const defaultSpells=[
+  {id:'mih',level:0,name:'',school:'',time:'1 action',range:'30 ft',duration:'1 minute',components:'S,M',text:'Create a sound or image in a 5-foot cube.'},
+  {id:'msg',level:0,name:'',school:'',time:'1 action',range:'120 ft',duration:'1 round',components:'V,S,M',text:'Point and whisper; only the target hears and may whisper back.'},
+  {id:'mh', level:0,name:'',school:'',time:'1 action',range:'30 ft',duration:'1 minute',components:'V,S',text:'Spectral hand manipulates objects.'},
+  {id:'ma', level:1,name:'',school:'',time:'1 action',range:'Touch',duration:'8 hours',components:'V,S,M',prepared:true,text:'Target’s AC becomes 13 + DEX.'},
+  {id:'sh', level:1,name:'',school:'',time:'1 reaction',range:'Self',duration:'1 round',components:'V,S',prepared:true,text:'+5 AC vs the triggering attack until start of your next turn.'},
+  {id:'sl', level:1,name:'',school:'',time:'1 action',range:'90 ft',duration:'1 minute',components:'V,S,M',prepared:true,text:'Roll 5d8 HP; lowest current-HP creatures fall asleep first.'},
+  {id:'ds', level:1,name:'',school:'',time:'1 action',range:'Self',duration:'1 hour',components:'V,S',prepared:true,text:'Change your appearance.'},
+  {id:'dm', level:1,name:'',school:'',time:'1 action',range:'Self',duration:'10 minutes',components:'V,S',text:'Sense magic within 30 ft; learn school.'},
+  {id:'ff', level:1,name:'',school:'',time:'1 hour',range:'10 ft',duration:'Until dispelled',components:'V,S,M',text:'Summon a raven familiar; deliver touch spells; share senses.'}
+];
+const arcanaImageMap = {
+  fool:"Fool.png", magician:"Magician.png", highpriestess:"Priestess.png", empress:"Empress.png", emperor:"Emperor.png", hierophant:"Hierophant.png", lovers:"Lovers.png",
+  chariot:"Chariot.png", strength:"Strength.png", hermit:"Hermit.png", wheel:"Wheel.png", justice:"Justice.png", hangedman:"Hanged Man.png", death:"Death.png",
+  temperance:"Temperance.png", devil:"Devil.png", tower:"Tower.png", star:"Star.png", moon:"Moon.png", sun:"Sun.png", judgement:"Judgement.png", world:"World.png"
+};
+const defaultArcana = [
+  { id:'fool',       name:'The Fool',       img:arcanaImageMap.fool,       tie:['mih'],                effect:'Step lightly: once this round, ignore OAs for the first 5 ft you move.' },
+  { id:'magician',   name:'The Magician',   img:arcanaImageMap.magician,   tie:['mh','mih'],          effect:'Sleight of will: +1 to one spell attack you make this turn.' },
+  { id:'highpriestess', name:'The High Priestess', img:arcanaImageMap.highpriestess, tie:['dm'],      effect:'Veiled knowledge: advantage on your next Arcana check today.' },
+  { id:'empress',    name:'The Empress',    img:arcanaImageMap.empress,    tie:['ds'],                effect:'Soothing presence: gain 1 temp HP when you cast an Enchantment (1/short rest).' },
+  { id:'emperor',    name:'The Emperor',    img:arcanaImageMap.emperor,    tie:['ma'],                effect:'Measured guard: after casting Mage Armor, +1 to your next CON (concentration) save today.' },
+  { id:'hierophant', name:'The Hierophant', img:arcanaImageMap.hierophant, tie:['dm','ff'],           effect:'Old rites: reduce a ritual’s setup by 5 minutes (table permission).' },
+  { id:'lovers',     name:'The Lovers',     img:arcanaImageMap.lovers,     tie:['msg','ds'],          effect:'Whispered pact: after a covert exchange, you and an ally have adv on Deception for 1 hour.' },
+  { id:'chariot',    name:'The Chariot',    img:arcanaImageMap.chariot,    tie:['sh'],                effect:'Relentless step: after you cast Shield, you may move 10 ft immediately (no OAs).' },
+  { id:'strength',   name:'Strength',       img:arcanaImageMap.strength,   tie:[],                    effect:'Quiet focus: advantage on your next Athletics or Intimidation check today.' },
+  { id:'hermit',     name:'The Hermit',     img:arcanaImageMap.hermit,     tie:[],                    effect:'Fade to the margins: advantage on your next Stealth check today.' },
+  { id:'wheel',      name:'Wheel of Fortune', img:arcanaImageMap.wheel,    tie:[],                    effect:'Turn of the card: once, add 1d4 to any roll you make in the next minute.' },
+  { id:'justice',    name:'Justice',        img:arcanaImageMap.justice,    tie:[],                    effect:'Measured response: if a creature harmed an ally this round, impose disadv on its next contested check vs you.' },
+  { id:'hangedman',  name:'The Hanged Man', img:arcanaImageMap.hangedman,  tie:[],                    effect:'Delay insight: choose to act last this round to gain adv on one check there.' },
+  { id:'death',      name:'Death',          img:arcanaImageMap.death,      tie:['sl'],                effect:'Quiet finality: when an illusion ends or a Sleep’d target wakes, a cold whisper lingers (RP leverage).' },
+  { id:'temperance', name:'Temperance',     img:arcanaImageMap.temperance, tie:[],                    effect:'Even flow: when you deal spell damage this turn, friendly targets are unaffected (if plausible).' },
+  { id:'devil',      name:'The Devil',      img:arcanaImageMap.devil,      tie:['mih'],               effect:'Tempting detail: your illusion can include a subtle scent or warmth (no extra mechanics).' },
+  { id:'tower',      name:'The Tower',      img:arcanaImageMap.tower,      tie:[],                    effect:'Crack in the sky: create a harmless thunder pop within 30 ft (distraction).' },
+  { id:'star',       name:'The Star',       img:arcanaImageMap.star,       tie:['ma','sh'],           effect:'Guiding light: +1 on your next concentration check today.' },
+  { id:'moon',       name:'The Moon',       img:arcanaImageMap.moon,       tie:['mih','ds'],          effect:'Lingering shimmer: your next illusion lasts 1 extra round if it would end.' },
+  { id:'sun',        name:'The Sun',        img:arcanaImageMap.sun,        tie:[],                    effect:'Clarity: +2 to your next Perception check today.' },
+  { id:'judgement',  name:'Judgement',      img:arcanaImageMap.judgement,  tie:[],                    effect:'Reckoning: when a foe drops to 0 HP this combat, regain 1 arcana charge (once per combat).' },
+  { id:'world',      name:'The World',      img:arcanaImageMap.world,      tie:[],                    effect:'All paths align: treat difficult terrain as normal for one turn.' }
+];
+
+const familiar={name:'Raven Familiar',senses:'Share senses within 100 ft; advantage on sight/hearing Perception when you focus.',speed:'10 ft., fly 50 ft.',notes:'Scout quietly. Deliver touch spells. Help action as DM allows.'};
+
+/* ===== STATE ===== */
+let weapons=[], spells=[], arcana=[], bag=[], ids=[], contacts=[], cases=[], macros=[];
+let slots={1:{max:2,used:0}}, buffs={skillAdv:{},spellAttackPlus1:false,concPlus1:false,percPlus2:false,oneD4:false,noOA5:false};
+let portraitData='';
+function abilities(){const o={}; for(const k of abilKeys){o[k]=abilMod($(`input[data-ability="${k}"]`).value)} return o;}
+function prof(){return parseInt($('#profBonus').value||2,10);}
+function saveAll(){
+  const sheet={ac:+($('#ac').value||15),init:+($('#init').value||2),hp:+($('#hp').value||7),hpMax:+($('#hpMax').value||7),
+               coins:+($('#coins').value||10),insp:$('#insp').value,exh:$('#exh').value,ds:$('#ds').value,
+               bolts:$('#bolts').value,tarotCount:$('#tarotCount').value,arcCharges:$('#arcCharges').value,cardAmmo:$('#cardAmmo').value};
+  const header={charName:$('#charName').value,charClass:$('#charClass').value,charBg:$('#charBg').value,charRace:$('#charRace').value,
+                charAlign:$('#charAlign').value,playerName:$('#playerName').value,profBonus:prof(),xp:+($('#xp').value||0),
+                campaign:$('#campaign').value,speed:$('#speed').value,hitDice:$('#hitDice').value,spellAbility:$('#spellAbility').value,
+                spellDC:+($('#spellDC').value||13),spellAtk:$('#spellAtk').value};
+  localStorage.setItem(stateKey,JSON.stringify({header,sheet,weapons,spells,arcana,bag,slots,ids,contacts,cases,macros,portrait:portraitData,buffs}));
+}
+function readAll(){
+  const raw=localStorage.getItem(stateKey);
+  if(!raw){ weapons=structuredClone(defaultWeapons); spells=structuredClone(defaultSpells); arcana=structuredClone(defaultArcana); return; }
+  try{
+    const s=JSON.parse(raw);
+    weapons=s.weapons||structuredClone(defaultWeapons); spells=s.spells||structuredClone(defaultSpells);
+    arcana=(s.arcana||structuredClone(defaultArcana)).map(c=>({...c,img:c.img||(arcanaImageMap[c.id]||'')}));
+    bag=s.bag||[]; slots=s.slots||{1:{max:2,used:0}}; ids=s.ids||[]; contacts=s.contacts||[]; cases=s.cases||[]; macros=s.macros||[];
+    portraitData=s.portrait||'';
+    if(s.sheet){
+      $('#hp').value=s.sheet.hp??7; $('#hpMax').value=s.sheet.hpMax??7; $('#coins').value=s.sheet.coins??10;
+      $('#arcCharges').value=s.sheet.arcCharges??abilities().INT; $('#tarotCount').value=s.sheet.tarotCount??52;
+      $('#bolts').value=s.sheet.bolts??20; $('#cardAmmo').value=s.sheet.cardAmmo??10; $('#ac').value=s.sheet.ac??15;
+      $('#init').value=s.sheet.init??2; $('#ds').value=s.sheet.ds??'0/0'; $('#insp').value=s.sheet.insp??0; $('#exh').value=s.sheet.exh??0;
+    }
+    buffs=s.buffs||buffs;
+  }catch(e){ console.warn(e); }
+}
+
+/* ===== RENDER HELPERS ===== */
+function updateMods(){
+  $$('[data-mod]').forEach(el=>{ const k=el.dataset.mod; el.textContent='mod '+fmt(abilMod($(`input[data-ability="${k}"]`).value)); });
+  const P=prof();
+  const get = (name,abil)=>10+abilities()[abil]+(document.querySelector(`input[data-skill="${name}"]`)?.checked?P:0);
+  $('#pp').value=get('Perception','WIS'); $('#pi').value=get('Investigation','INT'); $('#ps').value=get('Insight','WIS');
+}
+function weaponRow(w){
+  const props=(w.properties||[]).map(p=>`<span class="tag">${p}</span>`).join(' ');
+  const dmgText=(w.damageFormula||'—')+' '+(w.damageType||'');
+  return `<table class="table"><tr>
+    <td class="clickable" data-open-weapon="${w.id}"><strong>${w.name}</strong><div style="color:#a8a29a;font-size:13px">${w.base||''}</div></td>
+    <td><button class="btn" data-roll-weapon-atk="${w.id}">Attack</button></td>
+    <td>${w.damageFormula? `<button class="btn" data-roll-weapon-dmg="${w.id}">${dmgText.trim()}</button>`:'<span style="color:#a8a29a;font-size:13px">—</span>'}</td>
+    <td>${props||''}</td>
+    <td style="text-align:right"><button class="btn ghost" data-edit-weapon="${w.id}">Edit</button><button class="btn warn" data-del-weapon="${w.id}">Del</button></td>
+  </tr></table>`;
+}
+function renderWeapons(){ $('#weaponsList').innerHTML=(weapons||[]).map(weaponRow).join(''); }
+function tarotCard(s){return `<div class="tcard clickable ${s.prepared?'prepared':''} ${s.ritual?'ritual':''}" data-open-spell="${s.id}"><div class="name">${s.name}</div><div class="meta">${s.level===0?'Cantrip':'Level '+s.level} — ${s.school}</div></div>`;}
+function spellRow(s){const tags=(s.prepared?'<span class="tag">Prepared</span>':'')+(s.ritual?' <span class="tag">Ritual</span>':''); return `<div class="row"><div class="label clickable" data-open-spell="${s.id}"><strong>${s.name}</strong> <span style="color:#a8a29a">— ${s.school} • ${s.level===0?'Cantrip':'L'+s.level}</span></div><div class="stack">${tags}</div><div><button class="btn ghost" data-toggle-prepared="${s.id}">${s.prepared?'Unprep':'Prep'}</button><button class="btn ghost" data-edit-spell="${s.id}">Edit</button><button class="btn warn" data-del-spell="${s.id}">Del</button></div></div>`;}
+/* Tarot-style spell card with background art + school badge */
+function spellCard(s){
+  const img = getSpellArt(s);
+  const lvl = (s.level===0 ? 'Cantrip' : 'Level '+s.level);
+  const badge = s.school || '';
+  // important: quote the URL so filenames with spaces work
+  return `
+    <div class="tcard spell clickable ${s.prepared?'prepared':''} ${s.ritual?'ritual':''}"
+         data-open-spell="${s.id}" data-school="${badge}">
+      <div class="art" style="background-image:url('${img}')"></div>
+      <div class="grain"></div>
+      <div class="badge">${badge}${s.ritual? ' • Ritual':''}</div>
+      <div class="name">${s.name}</div>
+      <div class="meta">${lvl}</div>
+    </div>`;
+}
+/* Where your spell PNGs live*/
+const ART_BASE = '';
+
+/* Per-spell art override*/
+const spellArtById = {
+  dm: ART_BASE + 'Detect.png',          // Detect Magic
+  ds: ART_BASE + 'Disguise.png',        // Disguise Self
+  ff: ART_BASE + 'Familiar.png',        // Find Familiar
+  mh: ART_BASE + 'Mage Hand.png',       // Mage Hand
+  msg: ART_BASE + 'Message.png',        // Message
+  mih: ART_BASE + 'Minor Illusion.png', // Minor Illusion
+  sh: ART_BASE + 'Shield.png',          // Shield
+  sl: ART_BASE + 'Sleep.png'            // Sleep
+};
+
+/* Fallback per school (if a spell lacks a direct image) */
+const schoolArtMap = {
+  Abjuration:    ART_BASE + 'school_Abjuration.jpg',
+  Conjuration:   ART_BASE + 'school_Conjuration.jpg',
+  Divination:    ART_BASE + 'school_Divination.jpg',
+  Enchantment:   ART_BASE + 'school_Enchantment.jpg',
+  Evocation:     ART_BASE + 'school_Evocation.jpg',
+  Illusion:      ART_BASE + 'school_Illusion.jpg',
+  Necromancy:    ART_BASE + 'school_Necromancy.jpg',
+  Transmutation: ART_BASE + 'school_Transmutation.jpg'
+};
+
+function getSpellArt(s){
+  // 1) explicit spell image, 2) by id from map, 3) by school, 4) generic
+  return (s.img && s.img.trim())
+      || spellArtById[s.id]
+      || schoolArtMap[s.school]
+      || (ART_BASE + 'Shield.png');
+}
+
+
+function renderSpells(filter=window._spellFilter||'all'){
+  window._spellFilter=filter;
+  const view=window._viewMode||'deck';
+  let src=spells.slice();
+  if(filter==='prepared') src=src.filter(s=>s.prepared);
+  else if(filter==='ritual') src=src.filter(s=>s.ritual);
+  else if(filter!=='all') src=src.filter(s=> String(s.level)===String(filter));
+
+  if(view==='deck'){
+    $('#deckWrap').style.display='grid';
+    $('#spellsList').style.display='none';
+    $('#deckWrap').innerHTML = src.map(spellCard).join('');
+  }else{
+    $('#deckWrap').style.display='none';
+    $('#spellsList').style.display='block';
+    $('#spellsList').innerHTML = src.map(spellRow).join('');
+  }
+}
+
+function renderArcana(){
+  const html = (arcana || []).map(c => {
+    const ties = (c.tie || [])
+      .map(id => spells.find(s => s.id === id)?.name || '')
+      .filter(Boolean)
+      .join(', ') || '—';
+    return `
+      <div class="tcard arcana" data-open-arc="${c.id}" title="${c.name}${ties && ties !== '—' ? ' — ' + ties : ''}">
+        ${c.img ? `<img src="${c.img}" alt="${c.name}" onerror="this.remove()">` : ''}
+        <div class="name">${c.name}</div>
+        <div class="meta">${ties}</div>
+      </div>`;
+  }).join('');
+  $('#arcDeck').innerHTML = html;
+}
+
+function renderBuffs(){ const out=[]; if(Object.keys(buffs.skillAdv).length) out.push(`<span class="tag">Adv: ${Object.keys(buffs.skillAdv).join(', ')}</span>`); if(buffs.spellAttackPlus1) out.push('<span class="tag">+1 next spell attack</span>'); if(buffs.concPlus1) out.push('<span class="tag">+1 next Concentration</span>'); if(buffs.percPlus2) out.push('<span class="tag">+2 next Perception</span>'); if(buffs.oneD4) out.push('<span class="tag">+1d4 (one roll)</span>'); if(buffs.noOA5) out.push('<span class="tag">5 ft no OA</span>'); $('#buffsBar').innerHTML=out.join(' '); }
+
+/* ===== BUTTON LOGIC ===== */
+function openWeapon(w){openModal(`<h2>${w.name}</h2><div class="sec"><div class="kv"><div>Attack</div><div>${w.attackFormula||'+DEX+PROF'}</div></div><div class="kv"><div>Damage</div><div>${(w.damageFormula||'—')+' '+(w.damageType||'')}</div></div><div class="kv"><div>Props</div><div class="stack">${(w.properties||[]).map(p=>`<span class="tag">${p}</span>`).join(' ')||'—'}</div></div><div class="kv"><div>Notes</div><div>${w.notes||'—'}</div></div></div>`);}
+function editWeapon(id){const w=weapons.find(x=>x.id===id),fid='w_'+id; openModal(`<h2>Edit Weapon</h2><div class="sec">
+  <div class="kv"><div>Name</div><div><input id="${fid}_name" value="${w.name||''}"></div></div>
+  <div class="kv"><div>Base</div><div><input id="${fid}_base" value="${w.base||''}"></div></div>
+  <div class="kv"><div>Ability</div><div><select id="${fid}_ability">${abilKeys.map(a=>`<option ${w.ability===a?'selected':''}>${a}</option>`).join('')}</select></div></div>
+  <div class="kv"><div>Proficient</div><div><input type="checkbox" id="${fid}_prof" ${w.proficient?'checked':''}></div></div>
+  <div class="kv"><div>Attack</div><div><input id="${fid}_atk" value="${w.attackFormula||''}" placeholder="+DEX+PROF"></div></div>
+  <div class="kv"><div>Damage</div><div><input id="${fid}_dmg" value="${w.damageFormula||''}" placeholder="1d4+DEX"></div></div>
+  <div class="kv"><div>Type</div><div><input id="${fid}_dtype" value="${w.damageType||''}" placeholder="piercing"></div></div>
+  <div class="kv"><div>Props</div><div><input id="${fid}_props" value="${(w.properties||[]).join(', ')}"></div></div>
+  <div class="kv"><div>Notes</div><div><textarea id="${fid}_notes" style="width:100%;min-height:90px">${w.notes||''}</textarea></div></div>
+  <div class="kv"><div></div><div><button class="btn" id="${fid}_save">Save</button></div></div></div>`);
+  $('#'+fid+'_save').onclick=()=>{w.name=$('#'+fid+'_name').value.trim(); w.base=$('#'+fid+'_base').value.trim(); w.ability=$('#'+fid+'_ability').value; w.proficient=$('#'+fid+'_prof').checked; w.attackFormula=$('#'+fid+'_atk').value.trim(); w.damageFormula=$('#'+fid+'_dmg').value.trim(); w.damageType=$('#'+fid+'_dtype').value.trim(); w.properties=($('#'+fid+'_props').value||'').split(',').map(s=>s.trim()).filter(Boolean); w.notes=$('#'+fid+'_notes').value; saveAll(); renderWeapons(); closeModal();};
+}
+function addWeapon(){const id='w'+Date.now(); weapons.push({id,name:'New Weapon',base:'',ability:'STR',proficient:false,attackFormula:'+STR',damageFormula:'1d4+STR',damageType:'',properties:[],notes:''}); saveAll(); renderWeapons(); editWeapon(id);}
+function delWeapon(id){weapons=weapons.filter(w=>w.id!==id); saveAll(); renderWeapons();}
+function rollWeaponAttack(w){const A=abilities(), P=prof()*(w.proficient?1:0); const m=rollExpr(w.attackFormula||'+DEX+PROF',A,P).total + (w.id==='spellatk' && buffs.spellAttackPlus1?1:0); if(w.id==='spellatk' && buffs.spellAttackPlus1){buffs.spellAttackPlus1=false; renderBuffs();} const adv=rollMode()==='adv', dis=rollMode()==='dis'; const r=d20(m,{adv,dis}); openModal(`<h2>${w.name} — Attack</h2><div class="sec"><div class="kv"><div>d20</div><div>${r.n}</div></div><div class="kv"><div>Total</div><div><strong>${r.total}</strong></div></div></div>`); saveAll();}
+function rollWeaponDamage(w){const r=rollExpr(w.damageFormula||'1d4',abilities(),prof()); openModal(`<h2>${w.name} — Damage</h2><div class="sec"><div class="kv"><div>Roll</div><div>${r.detail}</div></div><div class="kv"><div>Total</div><div><strong>${r.total}</strong> ${w.damageType||''}</div></div></div>`);}
+
+function openSpell(s){
+  const img = getSpellArt(s); // may be ''
+  openModal(`
+    <h2>${s.name}</h2>
+    <div style="color:#a8a29a">${s.level===0?'Cantrip':'Level '+s.level} — ${s.school||'—'}</div>
+
+    <div class="modal-split">
+      <div>
+        <div class="sec">
+          <div class="kv"><div>Casting Time</div><div>${s.time||'—'}</div></div>
+          <div class="kv"><div>Range</div><div>${s.range||'—'}</div></div>
+          <div class="kv"><div>Duration</div><div>${s.duration||'—'}</div></div>
+          <div class="kv"><div>Components</div><div>${s.components||'—'}</div></div>
+        </div>
+
+        <div class="sec">
+          <div class="kv"><div>Description</div>
+            <div>${(s.text||'—').replace(/\n/g,'<br>')}</div>
+          </div>
+        </div>
+
+        <div class="sec">
+          <div class="kv"><div>Prepared?</div>
+            <div><button class="btn ghost" id="togglePrep">${s.prepared?'Unprep':'Prep'}</button></div>
+          </div>
+          <div class="kv"><div>Cast w/ Tarot</div>
+            <div><button class="btn" id="castSpell">Cast</button></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-art" ${img ? '' : 'style="display:none"'} >
+        <div class="artbox" id="spellArtBox">
+          <img id="spellArtImg" class="artimg" src="${img}" alt="${s.name}">
+        </div>
+        <div class="chip">
+          Art URL&nbsp;<input id="spellImgUrl" style="flex:1; min-width:0"
+            value="${s.img||''}" placeholder="Leave blank to use default">
+        </div>
+        <div class="stack">
+          <button class="btn" id="saveSpellImg">Save Art</button>
+          <span class="hint">Click the image to zoom</span>
+        </div>
+      </div>
+    </div>
+  `);
+
+  $('#togglePrep').onclick=()=>{ s.prepared=!s.prepared; enforcePrepCap(); saveAll(); renderSpells(); closeModal(); };
+  $('#castSpell').onclick=()=>{
+    if(/(attack)/i.test(s.text||'')){ buffs.spellAttackPlus1=true; renderBuffs(); saveAll(); }
+    openModal(`<h2>${s.name} Cast</h2><div class="sec"><div class="kv"><div>Note</div><div>Resolve at table.</div></div></div>`);
+  };
+
+  $('#saveSpellImg')?.addEventListener('click', ()=>{
+    const url = ($('#spellImgUrl').value||'').trim();
+    s.img = url || '';
+    saveAll(); renderSpells();
+    const src = getSpellArt(s);
+    const imgEl = $('#spellArtImg');
+    if(src){ imgEl.src = src; imgEl.closest('.modal-art').style.display=''; }
+  });
+
+  $('#spellArtBox')?.addEventListener('click', ()=>{
+    $('#spellArtBox').classList.toggle('is-zoom');
+  });
+}
+function getArcArt(card){
+  // prefer per-card override, then your arcanaImageMap, else nothing
+  return (card.img && card.img.trim()) || (arcanaImageMap?.[card.id] || '');
+}
+
+
+function editSpell(id){const s=spells.find(x=>x.id===id),fid='s_'+id; openModal(`<h2>Edit Spell</h2><div class="sec">
+  <div class="kv"><div>Name</div><div><input id="${fid}_name" value="${s.name||''}"></div></div>
+  <div class="kv"><div>Level</div><div><input id="${fid}_lvl" type="number" min="0" max="9" value="${s.level||0}"></div></div>
+  <div class="kv"><div>School</div><div><input id="${fid}_sch" value="${s.school||''}"></div></div>
+  <div class="kv"><div>Time</div><div><input id="${fid}_time" value="${s.time||''}"></div></div>
+  <div class="kv"><div>Range</div><div><input id="${fid}_rng" value="${s.range||''}"></div></div>
+  <div class="kv"><div>Duration</div><div><input id="${fid}_dur" value="${s.duration||''}"></div></div>
+  <div class="kv"><div>Components</div><div><input id="${fid}_cmp" value="${s.components||''}"></div></div>
+  <div class="kv"><div>Ritual</div><div><input type="checkbox" id="${fid}_rit" ${s.ritual?'checked':''}></div></div>
+  <div class="kv"><div>Prepared</div><div><input type="checkbox" id="${fid}_prep" ${s.prepared?'checked':''}></div></div>
+  <div class="kv"><div>Text</div><div><textarea id="${fid}_txt" style="width:100%;min-height:120px">${s.text||''}</textarea></div></div>
+  <div class="kv"><div></div><div><button class="btn" id="${fid}_save">Save</button></div></div></div>`);
+  $('#'+fid+'_save').onclick=()=>{s.name=$('#'+fid+'_name').value.trim(); s.level=+($('#'+fid+'_lvl').value||0); s.school=$('#'+fid+'_sch').value.trim(); s.time=$('#'+fid+'_time').value.trim(); s.range=$('#'+fid+'_rng').value.trim(); s.duration=$('#'+fid+'_dur').value.trim(); s.components=$('#'+fid+'_cmp').value.trim(); s.ritual=$('#'+fid+'_rit').checked; s.prepared=$('#'+fid+'_prep').checked; s.text=$('#'+fid+'_txt').value; enforcePrepCap(); saveAll(); renderSpells(); closeModal();};
+}
+function addSpell(){const id='s'+Date.now(); spells.push({id,level:0,name:'New Spell',school:'',time:'1 action',range:'Self',duration:'Instant',components:'',text:'',ritual:false,prepared:false}); saveAll(); renderSpells(); editSpell(id);}
+function delSpell(id){spells=spells.filter(s=>s.id!==id); saveAll(); renderSpells();}
+function enforcePrepCap(){const modINT=abilities().INT; const wizLvl=parseInt((/(\d+)/.exec($('#charClass').value||'1')||[])[1]||'1',10); const cap=Math.max(1,modINT+wizLvl); const prepared=spells.filter(s=>s.level>0 && s.prepared && !s.ritual); if(prepared.length>cap){let over=prepared.length-cap; for(let i=spells.length-1;i>=0 && over>0;i--){if(spells[i].level>0 && spells[i].prepared && !spells[i].ritual){spells[i].prepared=false; over--;}} alert(`Prepared spells capped at ${cap}. Extra spells were un-prepared.`);}}
+
+/* Lists */
+function renderCases(){const a=cases||[]; $('#caseList').innerHTML=a.length?a.map((it,i)=>`<div class="row"><div class="label"><strong>${it.name}</strong> <span style="color:#a8a29a">${it.status||''}</span></div><div><button class="btn ghost" data-edit-case="${i}">Edit</button><button class="btn warn" data-del-case="${i}">Del</button></div></div>`).join(''):`<div style="color:#a8a29a">No leads yet.</div>`;}
+function renderIds(){const a=ids||[]; $('#idsList').innerHTML=a.length?a.map((it,i)=>`<div class="row"><div class="label"><strong>${it.name}</strong> <span style="color:#a8a29a">${[it.cover,it.tell].filter(Boolean).join(' • ')}</span></div><div><button class="btn ghost" data-edit-id="${i}">Edit</button><button class="btn warn" data-del-id="${i}">Del</button></div></div>`).join(''):`<div style="color:#a8a29a">None yet.</div>`;}
+function renderContacts(){const a=contacts||[]; $('#contactsList').innerHTML=a.length?a.map((it,i)=>`<div class="row"><div class="label"><strong>${it.name}</strong> <span style="color:#a8a29a">${[it.role,it.favor].filter(Boolean).join(' • ')}</span></div><div><button class="btn ghost" data-edit-contact="${i}">Edit</button><button class="btn warn" data-del-contact="${i}">Del</button></div></div>`).join(''):`<div style="color:#a8a29a">None yet.</div>`;}
+function renderMacros(){const a=macros||[]; $('#macroList').innerHTML=a.length?a.map((it,i)=>`<div class="row"><div class="label"><strong>${it.name}</strong> <span style="color:#a8a29a">${it.expr}</span></div><div><button class="btn" data-run-macro="${i}">Roll</button><button class="btn ghost" data-edit-macro="${i}">Edit</button><button class="btn warn" data-del-macro="${i}">Del</button></div></div>`).join(''):`<div style="color:#a8a29a">No macros yet.</div>`;}
+function openFamiliar(){openModal(`<h2>${familiar.name}</h2><div class="sec"><div class="kv"><div>Senses</div><div>${familiar.senses}</div></div><div class="kv"><div>Speed</div><div>${familiar.speed}</div></div><div class="kv"><div>Notes</div><div>${familiar.notes}</div></div><div class="kv"><div>Quick</div><div class="stack"><button class="btn" id="faScout">Send to Scout</button><button class="btn" id="faDeliver">Deliver Touch Spell</button><button class="btn ghost" id="faRecall">Dismiss/Recall</button></div></div></div>`);}
+function openTrackRoll(abilityKey,label){const abil=abilities(); const isProf=(abilityKey==='WIS'?document.querySelector('input[data-skill="Survival"]')?.checked:document.querySelector('input[data-skill="Investigation"]')?.checked); const mod=abil[abilityKey]+(isProf?prof():0); const adv=$('#trkHelp').checked||rollMode()==='adv', dis=rollMode()==='dis'; const r=d20(mod,{adv,dis}); openModal(`<h2>${label}</h2><div class="sec"><div class="kv"><div>Raven Help</div><div>${$('#trkHelp').checked?'Advantage':'—'}</div></div><div class="kv"><div>d20</div><div>${r.n}</div></div><div class="kv"><div>Total</div><div><strong>${r.total}</strong></div></div></div>`);}
+
+/* Bag */
+function openBag(){const items=bag||[]; const total=items.reduce((a,b)=>a+(parseFloat(b.weight||0)*parseInt(b.qty||1,10)),0); openModal(`<h2>Bag / Inventory</h2><div class="sec"><div class="kv"><div>Total Items</div><div>${items.length}</div></div><div class="kv"><div>Total Weight</div><div><strong>${total.toFixed(2)}</strong> lb</div></div></div><div class="sec" id="bagList">${items.length?items.map((it,i)=>`<div class="row" data-bag="${i}"><div class="label"><strong>${it.name}</strong> <span style="color:#a8a29a">x${it.qty||1}</span></div><div style="color:#a8a29a">${it.weight||0} lb each</div><div><button class="btn ghost" data-edit-bag="${i}">Edit</button><button class="btn warn" data-del-bag="${i}">Del</button></div></div>`).join(''):'<div class="muted">Bag is empty.</div>'}</div><div class="sec"><button class="btn" id="addBagBtn">Add Item</button> <button class="btn" id="exportBagBtn">Copy List</button></div>`);}
+function editBag(i){const it=(bag||[])[i]; if(!it)return; openModal(`<h2>Edit Bag Item</h2><div class="sec"><div class="kv"><div>Name</div><div><input id="bname" value="${it.name||''}"></div></div><div class="kv"><div>Qty</div><div><input id="bqty" type="number" value="${it.qty||1}"></div></div><div class="kv"><div>Weight (lb)</div><div><input id="bw" type="number" step="0.01" value="${it.weight||0}"></div></div><div class="kv"><div>Note</div><div><textarea id="bnote" style="width:100%;min-height:90px">${it.note||''}</textarea></div></div><div class="kv"><div></div><div><button class="btn" id="bsave">Save</button></div></div></div>`); $('#bsave').onclick=()=>{it.name=$('#bname').value.trim(); it.qty=+($('#bqty').value||1); it.weight=parseFloat($('#bw').value||0); it.note=$('#bnote').value; saveAll(); openBag();};}
+
+/* ===== GLOBAL CLICK HANDLER ===== */
+document.addEventListener('click', (e)=>{
+  const el=(sel)=>e.target.closest(sel);
+
+  // toolbar / general
+  if(el('#printBtn')){window.print(); return;}
+  if(el('#resetBtn')){ if(confirm('Clear saved data?')){ localStorage.removeItem(stateKey); location.reload(); } return;}
+  if(el('#bagBtn')||el('#bagBtn2')){openBag(); return;}
+  if(el('#famBtn')){openFamiliar(); return;}
+  if(el('#trackBtn')){openTrackRoll('WIS','Tracking (WIS) — Survival'); return;}
+  if(el('#manageSlotsBtn')){openSlots(); return;}
+  if(el('#modalClose') || el('#modalBack')){ if(e.target.id==='modalBack' || e.target.id==='modalClose') closeModal(); return;}
+
+  // dice / conc
+  if(el('#rollBtn')){ const A=abilities(), P=prof(); const r=rollExpr($('#diceExpr').value,A,P); openModal(`<h2>Roll: ${$('#diceExpr').value}</h2><div class="sec"><div class="kv"><div>Breakdown</div><div>${r.detail}</div></div><div class="kv"><div>Total</div><div><strong>${r.total}</strong></div></div></div>`); return;}
+  if(el('#concBtn')){ doConcentration(); return;}
+
+  // weapons
+  const wOpen = el('[data-open-weapon]')?.dataset.openWeapon; if(wOpen){const w=weapons.find(x=>x.id===wOpen); if(w)openWeapon(w); return;}
+  const wAtk  = el('[data-roll-weapon-atk]')?.dataset.rollWeaponAtk; if(wAtk){const w=weapons.find(x=>x.id===wAtk); if(w){ if(w.id==='tarot'){ const n=parseInt($('#cardAmmo').value||0,10); if(n>0) $('#cardAmmo').value=String(n-1); } rollWeaponAttack(w);} return;}
+  const wDmg  = el('[data-roll-weapon-dmg]')?.dataset.rollWeaponDmg; if(wDmg){const w=weapons.find(x=>x.id===wDmg); if(w)rollWeaponDamage(w); return;}
+  const wEd   = el('[data-edit-weapon]')?.dataset.editWeapon; if(wEd){editWeapon(wEd); return;}
+  const wDel  = el('[data-del-weapon]')?.dataset.delWeapon; if(wDel){ if(confirm('Delete this weapon?')){delWeapon(wDel);} return;}
+  if(el('#addWeaponBtn')){addWeapon(); return;}
+  if(el('#longRestBtn')){doLongRest(); return;}
+
+  // skills & saves
+  const sRoll=el('[data-roll-skill]')?.dataset.rollSkill; if(sRoll){ const abilEl=document.querySelector(`input[data-skill="${sRoll}"]`); if(abilEl){ doSkillRoll(sRoll, abilEl.dataset.abil); } return;}
+  const vSave=el('[data-roll-save]')?.dataset.rollSave; if(vSave){ doSaveRoll(vSave); return;}
+
+  // spells
+  if(el('#addSpellBtn')){addSpell(); return;}
+  if(el('#prepInfoBtn')){ const cap = Math.max(1,abilities().INT + parseInt((/(\d+)/.exec($('#charClass').value||'0')||[])[1]||'1',10)); openModal(`<h2>Prepared Spells</h2><div class="sec"><div class="kv"><div>Cap</div><div>${cap} (INT mod + Wizard level; rituals don’t count)</div></div></div>`); return;}
+  if(el('#viewDeck')){ window._viewMode='deck'; renderSpells(); saveAll(); return;}
+  if(el('#viewList')){ window._viewMode='list'; renderSpells(); saveAll(); return;}
+  const filter=el('[data-spell-filter]')?.dataset.spellFilter; if(filter){ renderSpells(filter); saveAll(); return;}
+  const spOpen=el('[data-open-spell]')?.dataset.openSpell; if(spOpen){ const s=spells.find(x=>x.id===spOpen); if(s)openSpell(s); return;}
+  const spEd=el('[data-edit-spell]')?.dataset.editSpell; if(spEd){ editSpell(spEd); return;}
+  const spDel=el('[data-del-spell]')?.dataset.delSpell; if(spDel){ delSpell(spDel); return;}
+  const spPrep=el('[data-toggle-prepared]')?.dataset.togglePrepared; if(spPrep){ const s=spells.find(x=>x.id===spPrep); if(s){ s.prepared=!s.prepared; enforcePrepCap(); saveAll(); renderSpells(); } return;}
+  if(el('#importSpells')){ importJson((data)=>{ if(Array.isArray(data)){ spells=data; enforcePrepCap(); renderSpells(); saveAll(); } else alert('Expected an array'); }); return;}
+  if(el('#exportSpells')){ navigator.clipboard?.writeText(JSON.stringify(spells,null,2)); alert('Spells JSON copied.'); return;}
+
+  // arcana
+  const arcOpen=el('[data-open-arc]')?.dataset.openArc; if(arcOpen){ const c=arcana.find(x=>x.id===arcOpen); if(c) openArcCard(c); return;}
+  if(el('#arcExport')){ navigator.clipboard?.writeText(JSON.stringify(arcana,null,2)); alert('Arcana JSON copied.'); return;}
+  if(el('#arcImport')){ importJson((data)=>{ if(Array.isArray(data)){ arcana=data; renderArcana(); saveAll(); } else alert('Expected an array'); }); return;}
+
+  // tracking
+  if(el('#rollSurv')){ openTrackRoll('WIS','Tracking (WIS) — Survival'); return;}
+  if(el('#rollInv')){ openTrackRoll('INT','Tracking (INT) — Investigation'); return;}
+
+  // equipment / bag
+  if(el('#addToBagFromEquip')){ const lines=($('#equipment').value||'').split(/\n|,/).map(s=>s.trim()).filter(Boolean); for(const l of lines){ (bag||=[]).push({name:l,qty:1,weight:0,note:''}); } saveAll(); alert('Equipment added to Bag.'); return;}
+  if(el('#addBagBtn')){ (bag||=[]).push({name:'New Item',qty:1,weight:0,note:''}); saveAll(); openBag(); editBag(bag.length-1); return;}
+  if(el('#exportBagBtn')){ const text=(bag||[]).map(i=>`${i.name} x${i.qty} (${i.weight} lb)`).join('\n'); navigator.clipboard?.writeText(text); alert('Copied.'); return;}
+  const bagEd=el('[data-edit-bag]')?.dataset.editBag; if(bagEd!=null){ editBag(parseInt(bagEd,10)); return;}
+  const bagDel=el('[data-del-bag]')?.dataset.delBag; if(bagDel!=null){ bag.splice(parseInt(bagDel,10),1); saveAll(); openBag(); return;}
+
+  // ids / contacts / cases / macros
+  if(el('#addId')){ ids.push({name:'Alias',cover:'role/occupation',tell:'signature tell',note:''}); saveAll(); renderIds(); return;}
+  if(el('#exportIds')){ navigator.clipboard?.writeText(JSON.stringify(ids,null,2)); alert('Copied.'); return;}
+  if(el('#addContact')){ contacts.push({name:'Name',role:'antiquarian',favor:'owed/offered',note:''}); saveAll(); renderContacts(); return;}
+  if(el('#exportContacts')){ navigator.clipboard?.writeText(JSON.stringify(contacts,null,2)); alert('Copied.'); return;}
+  if(el('#addCase')){ cases.push({name:'Lead',status:'open',note:''}); saveAll(); renderCases(); return;}
+  if(el('#exportCase')){ navigator.clipboard?.writeText(JSON.stringify(cases,null,2)); alert('Copied.'); return;}
+  const edId=el('[data-edit-id]')?.dataset.editId; if(edId!=null){ editGeneric('ids',parseInt(edId,10),['cover','tell']); return;}
+  const delId=el('[data-del-id]')?.dataset.delId; if(delId!=null){ ids.splice(parseInt(delId,10),1); saveAll(); renderIds(); return;}
+  const edCt=el('[data-edit-contact]')?.dataset.editContact; if(edCt!=null){ editGeneric('contacts',parseInt(edCt,10),['role','favor']); return;}
+  const delCt=el('[data-del-contact]')?.dataset.delContact; if(delCt!=null){ contacts.splice(parseInt(delCt,10),1); saveAll(); renderContacts(); return;}
+  const edCs=el('[data-edit-case]')?.dataset.editCase; if(edCs!=null){ editLead(parseInt(edCs,10)); return;}
+  const delCs=el('[data-del-case]')?.dataset.delCase; if(delCs!=null){ cases.splice(parseInt(delCs,10),1); saveAll(); renderCases(); return;}
+  if(el('#addMacro')){ macros.push({name:'Sleep opener',expr:'5d8',note:'HP pool'}); saveAll(); renderMacros(); return;}
+  if(el('#exportMacros')){ navigator.clipboard?.writeText(JSON.stringify(macros,null,2)); alert('Copied.'); return;}
+  const runM=el('[data-run-macro]')?.dataset.runMacro; if(runM!=null){ $('#diceExpr').value=macros[runM].expr; $('#rollBtn').click(); return;}
+  const edM=el('[data-edit-macro]')?.dataset.editMacro; if(edM!=null){ editGeneric('macros',parseInt(edM,10),['expr']); return;}
+  const delM=el('[data-del-macro]')?.dataset.delMacro; if(delM!=null){ macros.splice(parseInt(delM,10),1); saveAll(); renderMacros(); return;}
+});
+
+/* ===== OTHER HELPERS ===== */
+function editGeneric(arrRef,i,fields){const a=window[arrRef]; const it=a[i]||{name:''}; openModal(`<h2>Edit</h2><div class="sec"><div class="kv"><div>Name</div><div><input id="e_name" value="${it.name||''}"></div></div>${fields.map(f=>`<div class="kv"><div>${f}</div><div><input id="e_${f}" value="${it[f]||''}"></div></div>`).join('')}<div class="kv"><div>Notes</div><div><textarea id="e_note" style="width:100%;min-height:90px">${it.note||''}</textarea></div></div><div class="kv"><div></div><div><button class="btn" id="e_save">Save</button></div></div></div>`); $('#e_save').onclick=()=>{ it.name=$('#e_name').value.trim(); fields.forEach(f=>it[f]=$('#e_'+f).value); it.note=$('#e_note').value; a[i]=it; saveAll(); closeModal(); if(arrRef==='ids')renderIds(); if(arrRef==='contacts')renderContacts(); if(arrRef==='macros')renderMacros();};}
+function editLead(i){const it=cases[i]||{name:'',status:'',note:''}; openModal(`<h2>Edit Lead</h2><div class="sec"><div class="kv"><div>Title</div><div><input id="cl_name" value="${it.name||''}"></div></div><div class="kv"><div>Status</div><div><input id="cl_status" value="${it.status||''}" placeholder="open / in progress / solved"></div></div><div class="kv"><div>Details</div><div><textarea id="cl_note" style="width:100%;min-height:120px">${it.note||''}</textarea></div></div><div class="kv"><div></div><div><button class="btn" id="cl_save">Save</button></div></div></div>`); $('#cl_save').onclick=()=>{ it.name=$('#cl_name').value.trim(); it.status=$('#cl_status').value; it.note=$('#cl_note').value; cases[i]=it; saveAll(); closeModal(); renderCases();};}
+
+function importJson(cb){const inp=document.createElement('input'); inp.type='file'; inp.accept='application/json'; inp.onchange=()=>{const f=inp.files?.[0]; if(!f)return; const r=new FileReader(); r.onload=()=>{try{cb(JSON.parse(r.result));}catch{alert('Invalid JSON');}}; r.readAsText(f);}; inp.click();}
+
+/* ===== CONCENTRATION / SKILL ROLLS ===== */
+function oneD4(){ if(buffs.oneD4){buffs.oneD4=false; renderBuffs(); saveAll(); return d(4);} return 0; }
+function doSkillRoll(name,abilKey){const ab=abilities()[abilKey]; const isProf=document.querySelector(`input[data-skill="${name}"]`)?.checked; const base=ab+(isProf?prof():0); const adv=(rollMode()==='adv') || !!buffs.skillAdv[name]; const dis=rollMode()==='dis'; if(buffs.skillAdv[name]) delete buffs.skillAdv[name]; const extra=(name==='Perception'&&buffs.percPlus2)?2:0; if(name==='Perception'&&buffs.percPlus2) buffs.percPlus2=false; const r=d20(base+extra,{adv,dis}); const add=oneD4(); openModal(`<h2>${name} (${abilKey})</h2><div class="sec"><div class="kv"><div>Base</div><div>${fmt(base)}${extra?` + ${extra} (Sun)`:''}${add?` + ${add} (Wheel)`:''}</div></div><div class="kv"><div>d20</div><div>${r.n}</div></div><div class="kv"><div>Total</div><div><strong>${r.total+add}</strong></div></div></div>`); saveAll();}
+function doSaveRoll(abilKey){const ab=abilities()[abilKey]; const isProf=document.querySelector(`[data-save-prof="${abilKey}"]`)?.checked; const base=ab+(isProf?prof():0); const adv=rollMode()==='adv', dis=rollMode()==='dis'; const r=d20(base,{adv,dis}); const add=oneD4(); openModal(`<h2>${abilKey} Save</h2><div class="sec"><div class="kv"><div>Base</div><div>${fmt(base)}${add?` + ${add} (Wheel)`:''}</div></div><div class="kv"><div>d20</div><div>${r.n}</div></div><div class="kv"><div>Total</div><div><strong>${r.total+add}</strong></div></div></div>`); saveAll();}
+function doConcentration(){const base=abilities().CON+prof(); const bonus=buffs.concPlus1?1:0; const r=d20(base+bonus,{adv:rollMode()==='adv',dis:rollMode()==='dis'}); const add=oneD4(); openModal(`<h2>Concentration Check</h2><div class="sec"><div class="kv"><div>Base</div><div>${fmt(base)}${bonus?` + ${bonus} (Star/Emperor)`:''}${add?` + ${add} (Wheel)`:''}</div></div><div class="kv"><div>d20</div><div>${r.n}</div></div><div class="kv"><div>Total</div><div><strong>${r.total+add}</strong></div></div></div>`); if(buffs.concPlus1){buffs.concPlus1=false; renderBuffs(); saveAll();}}
+
+/* ===== ARCANA ===== */
+function openArcCard(card){
+  const tieNames = (card.tie||[]).map(id => spells.find(s => s.id === id)?.name).filter(Boolean);
+  const img = getArcArt(card);
+
+  openModal(`
+    <h2>${card.name}</h2>
+
+    <div class="modal-split">
+      <div>
+        <div class="sec">
+          <div class="kv"><div>Effect</div><div>${card.effect||'—'}</div></div>
+          <div class="kv"><div>Ties</div><div>${tieNames.join(', ')||'—'}</div></div>
+        </div>
+
+        <div class="sec">
+          <div class="kv">
+            <div>Use Effect</div>
+            <div>
+              <button class="btn" id="useCard">Use (spend 1 charge)</button>
+              <label style="margin-left:10px;color:#a8a29a"><input type="checkbox" id="noCharge"> Don’t spend</label>
+            </div>
+          </div>
+          <div class="kv"><div>Quick Cast</div>
+            <div class="stack">
+              ${(card.tie||[]).map(id => {
+                const s=spells.find(sp=>sp.id===id);
+                return s ? `<button class="btn ghost" data-cast-id="${s.id}">${s.name}</button>` : '';
+              }).join('')}
+            </div>
+          </div>
+        </div>
+
+        <div class="sec">
+          <div class="kv"><div>Manage</div>
+            <div class="stack">
+              <button class="btn ghost" id="saveArc">Save</button>
+              <button class="btn warn" id="delArc">Delete</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-art" ${img ? '' : 'style="display:none"'} >
+        <div class="artbox" id="arcArtBox">
+          <img id="arcArtImg" class="artimg" src="${img}" alt="${card.name}">
+        </div>
+        <div class="chip">
+          Image URL&nbsp;<input id="arcImgUrl" style="flex:1; min-width:0"
+            value="${card.img||''}" placeholder="Leave blank to use default">
+        </div>
+        <div class="stack">
+          <button class="btn" id="saveArcImg">Save Art</button>
+          <span class="hint">Click the image to zoom</span>
+        </div>
+      </div>
+    </div>
+  `);
+
+  // actions
+  $('#saveArc').onclick = () => {
+    const inp = $('#arcImgUrl');
+    if (inp) card.img = (inp.value||'').trim();
+    saveAll(); renderArcana(); closeModal();
+  };
+
+  $('#saveArcImg')?.addEventListener('click', ()=>{
+    card.img = ($('#arcImgUrl').value||'').trim();
+    const src = getArcArt(card);
+    const el = $('#arcArtImg');
+    if (src){ el.src = src; el.closest('.modal-art').style.display=''; }
+    saveAll(); renderArcana();
+  });
+
+  $('#delArc').onclick = ()=> {
+    if (!confirm('Delete this card?')) return;
+    arcana = arcana.filter(a=>a.id!==card.id);
+    saveAll(); renderArcana(); closeModal();
+  };
+
+  $('#useCard').onclick = ()=> useArc(card, !$('#noCharge').checked);
+
+  $('#arcArtBox')?.addEventListener('click', ()=>{
+    $('#arcArtBox').classList.toggle('is-zoom');
+  });
+
+  // quick cast buttons
+  $('#modal').onclick = (e)=>{
+    const id = e.target?.dataset?.castId;
+    if(!id) return;
+    const s = spells.find(x=>x.id===id);
+    if(s) openSpell(s);
+  };
+}
+
+
+/* ===== SLOTS (modal) ===== */
+function openSlots(){const s=slots[1]||{max:2,used:0}; openModal(`<h2>Spell Slots</h2><div class="sec"><div class="kv"><div>Level 1 Max</div><div><input id="ss_max" type="number" min="0" value="${s.max}"></div></div><div class="kv"><div>Level 1 Used</div><div><input id="ss_used" type="number" min="0" value="${s.used}"></div></div><div class="kv"><div></div><div class="stack"><button class="btn" id="ss_use">Use One</button><button class="btn ghost" id="ss_restore">Restore One</button><button class="btn ghost" id="ss_save">Save</button></div></div></div>`); $('#ss_use').onclick=()=>{const cur=slots[1]; if(cur.used<cur.max){cur.used++; saveAll(); openSlots();} else alert('No slots left.');}; $('#ss_restore').onclick=()=>{const cur=slots[1]; if(cur.used>0){cur.used--; saveAll(); openSlots();}}; $('#ss_save').onclick=()=>{slots[1]={max:+($('#ss_max').value||0),used:+($('#ss_used').value||0)}; saveAll(); closeModal();};}
+
+/* ===== LONG REST ===== */
+function doLongRest(){
+  $('#hp').value=$('#hpMax').value;                   // HP to max
+  (slots[1] ||= {max:2,used:0}).used = 0;            // Spell slots reset
+  const per=$('#arcPerLongRest').value.trim();       // Arcana charges refill
+  const intMod=abilities().INT;
+  $('#arcCharges').value = (per.toUpperCase()==='INT') ? String(intMod) : String(parseInt(per||0,10));
+  buffs={skillAdv:{},spellAttackPlus1:false,concPlus1:false,percPlus2:false,oneD4:false,noOA5:false}; // clear buffs
+  renderBuffs(); saveAll();
+  openModal(`<h2>Long Rest</h2><div class="sec"><div class="kv"><div>HP</div><div>Restored to max</div></div><div class="kv"><div>Slots</div><div>All Level 1 slots restored</div></div><div class="kv"><div>Arcana</div><div>Charges set to ${$('#arcCharges').value}</div></div></div>`);
+}
+
+/* ===== INIT ===== */
+function attach(){
+  // inputs persist
+  $$('input,select,textarea').forEach(el=>{ el.addEventListener('input', saveAll); el.addEventListener('change', saveAll); });
+  $$('input[data-ability]').forEach(inp=> inp.addEventListener('input', ()=>{updateMods(); enforcePrepCap(); saveAll();}));
+  $('#charClass').addEventListener('input', ()=>{enforcePrepCap(); saveAll();});
+
+  // portrait persistence (base64) — click image to change
+  const img=$('#portraitImg'), inp=$('#portraitInput');
+  if(portraitData) img.src=portraitData;
+  if(inp){
+    img.addEventListener('click', ()=>inp.click());
+    inp.addEventListener('change',()=>{const f=inp.files?.[0]; if(!f)return; const r=new FileReader(); r.onloadend=()=>{portraitData=r.result; img.src=portraitData; saveAll();}; r.readAsDataURL(f);});
+  }
+
+  // initial render
+  updateMods(); renderWeapons(); renderSpells('all'); renderArcana(); renderBuffs(); renderIds(); renderContacts(); renderCases(); renderMacros();
+}
+
+(function(){
+  const video = document.getElementById('bgVideo');
+  const btn   = document.getElementById('bgToggle');
+  const sigil = document.getElementById('evSigil');
+
+  if (!video) return;
+
+  // Config: set true if invoking the sigil should always unmute
+  const ALWAYS_UNMUTE_ON_SIGIL = true;
+
+  // Init: start hidden, never loop
+  video.loop = false;
+  video.classList.add('is-hidden');
+
+  // Restore user's sound prefs
+  const savedMuted = JSON.parse(localStorage.getItem('bgvid.muted') ?? 'true');
+  const savedVol   = parseFloat(localStorage.getItem('bgvid.vol') ?? '0.35');
+  video.muted  = !!savedMuted;
+  video.volume = (isNaN(savedVol) ? 0.35 : Math.max(0, Math.min(1, savedVol)));
+
+  function showVideo(){ video.classList.remove('is-hidden'); video.classList.add('is-visible'); }
+  function hideVideo(){ video.classList.add('is-hidden'); video.classList.remove('is-visible'); }
+
+  function updateBtn(){
+    if (!btn) return;
+    btn.textContent = video.muted ? 'IV' : 'XXI';
+    btn.title = video.muted ? 'Unmute background' : 'Mute background';
+  }
+  updateBtn();
+
+  // Mute/unmute pill (doesn't auto-play, just sets state)
+  btn?.addEventListener('click', () => {
+    video.muted = !video.muted;
+    localStorage.setItem('bgvid.muted', JSON.stringify(video.muted));
+    updateBtn();
+  });
+
+  // Core behavior: play once on sigil press, then fade out and reset
+  sigil?.addEventListener('click', async () => {
+    // Optional: force unmute on invocation
+    if (ALWAYS_UNMUTE_ON_SIGIL && video.muted) {
+      video.muted = false;
+      localStorage.setItem('bgvid.muted', 'false');
+      updateBtn();
+    }
+
+    // If already playing, restart cleanly
+    if (!video.paused && !video.ended) {
+      try { video.pause(); } catch {}
+    }
+    try { video.currentTime = 0; } catch {}
+
+    showVideo();
+
+    // Ensure we only hide once per run
+    const onEnded = () => {
+      // Pause & reset so the next click starts instantly
+      try { video.pause(); } catch {}
+      try { video.currentTime = 0; } catch {}
+      hideVideo();
+    };
+    video.addEventListener('ended', onEnded, { once: true });
+
+    // Play (click counts as a gesture for iOS)
+    try { await video.play(); } catch { /* if it fails, it's a browser block */ }
+  });
+
+  // Optional: expose volume setter for console/macros
+  window.setBgVideoVolume = (v = 0.35) => {
+    video.volume = Math.max(0, Math.min(1, Number(v) || 0.35));
+    localStorage.setItem('bgvid.vol', String(video.volume));
+  };
+})();
+
+
+window.addEventListener('DOMContentLoaded', ()=>{ readAll(); if(portraitData) $('#portraitImg').src=portraitData; attach(); });
+</script>
+</body>
+</html>
