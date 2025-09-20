@@ -436,7 +436,7 @@
         <div class="id-row"><label>Hit Dice</label><input id="hitDice" value="1d6"></div>
       </div>
       <div class="bar">
-        <button class="btn" id="printBtn">Print</button>
+        <button class="btn" id="levelUpBtn">Level Up</button>
         <button class="btn" id="bagBtn">Bag</button>
         <button class="btn" id="famBtn">Familiar</button>
         <button class="btn" id="trackBtn">Track (Raven + Cane)</button>
@@ -587,6 +587,7 @@
           </span>
           <div class="chip">Save DC <input id="spellDC" type="number" value="13"></div>
           <div class="chip">Spell Atk <input id="spellAtk" type="text" value="+5"></div>
+          <button class="btn" id="importFromSRDBtn">Import from SRD</button>
           <button class="btn ghost" id="importSpells">Import</button>
           <button class="btn ghost" id="exportSpells">Export</button>
         </div>
@@ -1358,19 +1359,212 @@ function openArcCard(card){
 
 
 /* ===== SLOTS (modal) ===== */
-function openSlots(){const s=slots[1]||{max:2,used:0}; openModal(`<h2>Spell Slots</h2><div class="sec"><div class="kv"><div>Level 1 Max</div><div><input id="ss_max" type="number" min="0" value="${s.max}"></div></div><div class="kv"><div>Level 1 Used</div><div><input id="ss_used" type="number" min="0" value="${s.used}"></div></div><div class="kv"><div></div><div class="stack"><button class="btn" id="ss_use">Use One</button><button class="btn ghost" id="ss_restore">Restore One</button><button class="btn ghost" id="ss_save">Save</button></div></div></div>`); $('#ss_use').onclick=()=>{const cur=slots[1]; if(cur.used<cur.max){cur.used++; saveAll(); openSlots();} else alert('No slots left.');}; $('#ss_restore').onclick=()=>{const cur=slots[1]; if(cur.used>0){cur.used--; saveAll(); openSlots();}}; $('#ss_save').onclick=()=>{slots[1]={max:+($('#ss_max').value||0),used:+($('#ss_used').value||0)}; saveAll(); closeModal();};}
 
-/* ===== LONG REST ===== */
-function doLongRest(){
-  $('#hp').value=$('#hpMax').value;                   // HP to max
-  (slots[1] ||= {max:2,used:0}).used = 0;            // Spell slots reset
-  const per=$('#arcPerLongRest').value.trim();       // Arcana charges refill
-  const intMod=abilities().INT;
-  $('#arcCharges').value = (per.toUpperCase()==='INT') ? String(intMod) : String(parseInt(per||0,10));
-  buffs={skillAdv:{},spellAttackPlus1:false,concPlus1:false,percPlus2:false,oneD4:false,noOA5:false}; // clear buffs
-  renderBuffs(); saveAll();
-  openModal(`<h2>Long Rest</h2><div class="sec"><div class="kv"><div>HP</div><div>Restored to max</div></div><div class="kv"><div>Slots</div><div>All Level 1 slots restored</div></div><div class="kv"><div>Arcana</div><div>Charges set to ${$('#arcCharges').value}</div></div></div>`);
+function openSlots(){
+  const s = slots[1] || {max:2, used:0};
+  openModal(`
+    <h2>Spell Slots</h2>
+    <div class="sec">
+      <div class="kv"><div>Level 1 Max</div><div><input id="ss_max" type="number" min="0" value="${s.max}"></div></div>
+      <div class="kv"><div>Level 1 Used</div><div><input id="ss_used" type="number" min="0" value="${s.used}"></div></div>
+      <div class="kv"><div></div><div class="stack">
+        <button class="btn" id="ss_save">Save</button>
+        <button class="btn ghost" id="ss_use">Use 1</button>
+        <button class="btn ghost" id="ss_unuse">Unuse 1</button>
+      </div></div>
+    </div>
+  `);
+  $('#ss_save').onclick = ()=>{
+    const max = Math.max(0, +$('#ss_max').value||0);
+    const used = Math.min(max, Math.max(0, +$('#ss_used').value||0));
+    slots[1] = {max, used}; saveAll(); closeModal();
+  };
+  $('#ss_use').onclick = ()=>{
+    const s = slots[1]||{max:2,used:0}; if(s.used < s.max) s.used++; slots[1]=s; saveAll();
+    $('#ss_used').value = s.used;
+  };
+  $('#ss_unuse').onclick = ()=>{
+    const s = slots[1]||{max:2,used:0}; if(s.used > 0) s.used--; slots[1]=s; saveAll();
+    $('#ss_used').value = s.used;
+  };
 }
+
+// ===== Long Rest =====
+function doLongRest(){
+  $('#hp').value = $('#hpMax').value;
+  if(slots[1]) slots[1].used = 0;
+  const INT = abilities().INT;
+  const perLR = ($('#arcPerLongRest').value||'INT').trim().toUpperCase()==='INT' ? INT : +$('#arcPerLongRest').value||INT;
+  $('#arcCharges').value = perLR;
+  buffs = {skillAdv:{},spellAttackPlus1:false,concPlus1:false,percPlus2:false,oneD4:false,noOA5:false};
+  renderBuffs(); saveAll();
+  openModal(`<h2>Long Rest</h2><div class="sec">
+    <div class="kv"><div>HP</div><div>Restored to max</div></div>
+    <div class="kv"><div>Slots</div><div>Level 1 reset</div></div>
+    <div class="kv"><div>Arcana</div><div>Charges set to ${perLR}</div></div>
+  </div>`);
+}
+
+// ===== Arcana linking helper (spell -> single arcana) =====
+function linkSpellToArcana(spellId, arcId){
+  // remove from all
+  arcana.forEach(c=>{
+    c.tie = (c.tie||[]).filter(id => id !== spellId);
+  });
+  // add to selected
+  if(arcId && arcId !== 'none'){
+    const card = arcana.find(a=>a.id===arcId);
+    if(card){
+      card.tie = card.tie || [];
+      if(!card.tie.includes(spellId)) card.tie.push(spellId);
+    }
+  }
+  saveAll(); renderArcana();
+}
+
+// ===== Level Up (adds spells) =====
+function openLevelUp(){
+  const current = parseInt((/(\d+)/.exec($('#charClass').value||'1')||[])[1],10);
+  const next = current + 1;
+  openModal(`
+    <h2>Level Up</h2>
+    <div class="sec">
+      <div class="kv"><div>Current</div><div>${$('#charClass').value}</div></div>
+      <div class="kv"><div>New Level</div><div><input id="lvl_new" type="number" min="${next}" value="${next}"></div></div>
+      <div class="kv"><div>New Spell A</div><div><input id="lvl_spellA" placeholder="e.g., Silent Image"></div></div>
+      <div class="kv"><div>New Spell B</div><div><input id="lvl_spellB" placeholder="e.g., Tasha's Hideous Laughter"></div></div>
+      <div class="kv"><div>Link Arcana</div>
+        <div>
+          <select id="lvl_arcA">
+            <option value="none">(none)</option>
+            ${(arcana||[]).map(a=>`<option value="${a.id}">${a.name}</option>`).join('')}
+          </select>
+          <select id="lvl_arcB">
+            <option value="none">(none)</option>
+            ${(arcana||[]).map(a=>`<option value="${a.id}">${a.name}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="kv"><div></div><div class="stack">
+        <button class="btn" id="lvl_apply">Apply</button>
+        <button class="btn ghost" id="lvl_fetch">Auto-import from Open5e</button>
+      </div></div>
+    </div>
+  `);
+
+  $('#lvl_apply').onclick = ()=>{
+    const newLvl = +$('#lvl_new').value || next;
+    $('#charClass').value = `Wizard ${newLvl}`;
+    const names = [
+      ($('#lvl_spellA').value||'').trim(),
+      ($('#lvl_spellB').value||'').trim()
+    ].filter(Boolean);
+
+    const newIds = [];
+    for(const n of names){
+      if(spells.some(s=>s.name.toLowerCase()===n.toLowerCase())) continue;
+      const id = 's'+Date.now()+Math.random().toString(36).slice(2,6);
+      spells.push({id,level:1,name:n,school:'',time:'1 action',range:'Self',duration:'Instant',components:'',text:'',ritual:false,prepared:false});
+      newIds.push(id);
+    }
+    // link arcana if chosen
+    linkSpellToArcana(newIds[0], $('#lvl_arcA').value);
+    linkSpellToArcana(newIds[1], $('#lvl_arcB').value);
+
+    enforcePrepCap(); saveAll(); renderSpells(window._spellFilter||'all'); closeModal();
+  };
+
+  $('#lvl_fetch').onclick = async ()=>{
+    const A = ($('#lvl_spellA').value||'').trim();
+    const B = ($('#lvl_spellB').value||'').trim();
+    const picks = [A,B].filter(Boolean);
+    if(!picks.length){ alert('Enter at least one spell name.'); return; }
+    for (const q of picks){
+      const o = await importSRDSpell({name:q, prefer:'open5e'});
+      if(!o) continue;
+      const s = o.desc ? mapOpen5eToSpell(o) : map5eApiToSpell(o);
+      spells.push(s);
+      // link arcana (match A/B index)
+      const idx = (q===A) ? 0 : 1;
+      linkSpellToArcana(s.id, idx===0 ? $('#lvl_arcA').value : $('#lvl_arcB').value);
+    }
+    const newLvl = +$('#lvl_new').value || next;
+    $('#charClass').value = `Wizard ${newLvl}`;
+    enforcePrepCap(); saveAll(); renderSpells(); closeModal();
+  };
+}
+
+// ===== SRD Import (Open5e first, 5eAPI fallback) =====
+async function importSRDSpell({name, prefer='open5e'}={}){
+  const q = (name||'').trim();
+  if(!q){ alert('Spell name required'); return null; }
+  try{
+    if(prefer==='open5e'){
+      const data = await fetchJSON(`https://api.open5e.com/spells/?search=${encodeURIComponent(q)}`);
+      const res = data?.results||[];
+      if(res.length){
+        const exact = res.find(r => (r.name||'').toLowerCase()===q.toLowerCase());
+        return exact || res[0];
+      }
+    }
+    // fallback: 5e SRD
+    const slug = q.toLowerCase().replace(/\s+/g,'-');
+    return await fetchJSON(`https://www.dnd5eapi.co/api/spells/${encodeURIComponent(slug)}`);
+  }catch(e){
+    console.warn(e); alert('Import failed (network/CORS).'); return null;
+  }
+}
+
+function mapOpen5eToSpell(o){
+  const id = 's'+Date.now()+Math.random().toString(36).slice(2,6);
+  const level = (typeof o.level_int==='number') ? o.level_int : (String(o.level||'').match(/\d+/)?.[0]*1 || 0);
+  const school = (o.school_full||o.school||'').toString();
+  const time = o.casting_time||'1 action';
+  const range = o.range||'Self';
+  const duration = o.duration||'Instant';
+  const comps = [o.components, o.material ? `(${o.material})` : ''].filter(Boolean).join(' ');
+  const text = [o.desc, o.higher_level].filter(Boolean).join('\n\n');
+  const ritual = (o.ritual===true || (typeof o.ritual==='string' && /true/i.test(o.ritual)));
+  return { id, level, name:o.name||'Spell', school, time, range, duration, components:comps, text, ritual, prepared:false };
+}
+
+function map5eApiToSpell(o){
+  const id = 's'+Date.now()+Math.random().toString(36).slice(2,6);
+  const level = o.level||0;
+  const school = o.school?.name || '';
+  const time = (o.casting_time || (o.casting_time?.[0]?.name)) || '1 action';
+  const range = o.range || 'Self';
+  const duration = (o.duration?.[0]?.type) ? o.duration[0].type : (o.duration || 'Instant');
+  const comps = (o.components||[]).join(' ') + (o.material ? ` (${o.material})` : '');
+  const text = (o.desc||[]).join('\n\n') + ((o.higher_level||[]).length?`\n\n${o.higher_level.join('\n\n')}`:'');
+  const ritual = !!o.ritual;
+  return { id, level, name:o.name||'Spell', school, time, range, duration, components:comps, text, ritual, prepared:false };
+}
+
+async function fetchJSON(url){
+  const res = await fetch(url, {mode:'cors'});
+  if(!res.ok) throw new Error(`HTTP ${res.status}`);
+  return await res.json();
+}
+
+// ===== Wire the new buttons (delegated clicks already exist) =====
+document.addEventListener('click',(e)=>{
+  const el = s => e.target.closest(s);
+  if(el('#levelUpBtn')){ openLevelUp(); }
+  if(el('#importFromSRDBtn')){ 
+    const name = prompt('Spell name (SRD/Open5e)');
+    if(name) importSRDSpell({name, prefer:'open5e'}).then(o=>{
+      if(!o) return;
+      const s = o.desc ? mapOpen5eToSpell(o) : map5eApiToSpell(o);
+      spells.push(s); saveAll(); renderSpells();
+      openModal(`<h2>Imported</h2><div class="sec"><div class="kv"><div>Name</div><div>${s.name}</div></div><div class="kv"><div>Level</div><div>${s.level}</div></div><div class="kv"><div>School</div><div>${s.school}</div></div></div>`);
+    });
+  }
+}, true);
+
+// ===== Re-init guard =====
+if(typeof init==='function'){ try{ init(); }catch(e){ console.error(e); } }
+
 
 /* ===== INIT ===== */
 function attach(){
